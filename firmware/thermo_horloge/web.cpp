@@ -63,10 +63,15 @@ static void sendPage() {
     if (n == WIFI_SCAN_FAILED) { WiFi.scanNetworks(true); n = 0; }
     for (int i = 0; i < n; i++) h += "<option" + sel(WiFi.SSID(i) == cfg.ssid) + ">" + esc(WiFi.SSID(i)) + "</option>";
     h += F("</select></label><label>Ou nom du réseau à la main<input name=ssid2 autocomplete=off></label>");
+    h += F("<label>Mot de passe<input id=pw name=pass type=password autocomplete=current-password></label>"
+           "<label class=ck><input type=checkbox onclick=\"pw.type=this.checked?'text':'password'\"> Afficher le mot de passe</label>"
+           "<details><summary>Copier le mot de passe depuis ce téléphone</summary>"
+           "<p class=hint><b>Android</b> : Paramètres &gt; Wi-Fi &gt; ton réseau &gt; Partager. Le mot de passe s'affiche sous le QR code : appui long pour le copier, puis colle-le ici.</p>"
+           "<p class=hint><b>iPhone</b> (iOS 16 ou plus) : Réglages &gt; Wi-Fi &gt; (i) à côté de ton réseau &gt; Mot de passe &gt; Copier, puis colle-le ici.</p></details>"
+           "<p class=hint>Sans téléphone : touche « Bouton WPS » sur l'écran de l'objet, puis appuie sur le bouton WPS de ta box.</p>");
   } else {
     h += "<p class=hint>Connecté à " + esc(cfg.ssid) + " (" + String(netRssi()) + " dBm). Pour changer de réseau : Réglages &gt; Système &gt; Oublier le WiFi.</p>";
   }
-  if (netPortal()) h += F("<label>Mot de passe<input name=pass type=password autocomplete=off></label>");
   h += F("</section>");
 
   // Lieu

@@ -843,6 +843,28 @@ static void scrInfo() {
 
 static void scrPortal() {
   gBg(); gTop("Bienvenue");
+  uint8_t ws = netWpsState();
+  if (ws != 0 && ws != 3) {   // WPS en cours ou réussi
+    txt(U("Connexion par WPS"), 120, 60, fLab(), G.am, 1);
+    if (ws == 4) {
+      txt(U("Connecté à"), 120, 130, F13, G.dim, 1);
+      txt(netWpsSsid(), 120, 158, FN18, G.tx, 1, 220);
+      txt(U("Redémarrage…"), 120, 200, F13, G.cy, 1);
+      return;
+    }
+    if (ws == 1) {
+      txt(U("Appuie sur le bouton WPS"), 120, 120, F13, G.tx, 1);
+      txt(U("de ta box internet"), 120, 140, F13, G.tx, 1);
+      int left = netWpsLeft();
+      d->drawArc(120, 200, 30, 27, -90, -90 + 360 * left / 120, G.cy);
+      txt(String(left) + " s", 120, 206, FN18, G.tx, 1);
+      txt(U("Le bouton porte souvent deux flèches"), 120, 258, F10, G.dim, 1, 220);
+      txt(U("ou le mot WPS. Pas de mot de passe à taper."), 120, 272, F10, G.dim, 1, 220);
+    } else {
+      txt(U("Box trouvée, connexion…"), 120, 160, F13, G.tx, 1);
+    }
+    return;
+  }
   d->fillRect(70, 32, 100, 100, rgb(0xffffff));
   d->qrcode("WIFI:T:nopass;S:Thermo-Horloge;;", 74, 36, 92, 2);
   txt(U("Premier démarrage"), 120, 148, fLab(), G.am, 1);
@@ -854,7 +876,9 @@ static void scrPortal() {
     txt(U(steps[i][0]), 46, y + 11, F10, G.dim);
     txt(steps[i][1], 46, y + 25, F13, G.tx);
   }
-  txt(U("En attente d'un téléphone…"), 14, 280, F10, G.am);
+  if (ws == 3) txt(U("WPS sans réponse : réessaie"), 14, 280, F10, G.am, 0, 104);
+  else txt(U("ou sans téléphone :"), 14, 280, F10, G.dim, 0, 104);
+  kBtn(124, 268, 104, 30, "Bouton WPS", true);
 }
 
 static void scrAlert() {
@@ -966,7 +990,7 @@ static void onTap(int x, int y) {
   lastTouch = millis();
   if (asleep) { wakeUntil = millis() + (cfg.nightStyle == 2 ? 8000 : 60000); if (cfg.nightStyle != 2) uiScreen = S_HOME; board::backlight(40); asleep = false; return; }
   if (uiScreen == S_ALERT) { uiScreen = S_HOME; return; }
-  if (uiScreen == S_PORTAL) return;
+  if (uiScreen == S_PORTAL) { if (x >= 120 && y >= 262 && (netWpsState() == 0 || netWpsState() == 3)) netWpsStart(); return; }
   bool back = x < 104 && y >= 274;
   if (uiScreen == S_SETTINGS) { if (back) { uiScreen = S_HOME; cfgSave(); } else tapSettings(x, y); return; }
   if (uiScreen == S_SCREENS || uiScreen == S_INFO) {
@@ -1018,6 +1042,7 @@ static void bootPoll() {
     down = false;
     lastTouch = millis();
     if (asleep) { onTap(120, 160); return; }
+    if (uiScreen == S_PORTAL) { netWpsStart(); return; }   // bouton BOOT au premier démarrage : WPS
     if (millis() - t0 > 1500) { uiScreen = S_SETTINGS; stab = 0; }
     else if (uiScreen < N_CAROUSEL) go(1);
     else uiScreen = S_HOME;

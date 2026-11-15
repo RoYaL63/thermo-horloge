@@ -14,10 +14,16 @@ Maquette des écrans : https://claude.ai/artifact/PcZGaXmPJyaAnHCyXBNLbC
 
    La carte est trouvée toute seule et le firmware est envoyé (environ 1 minute).
    Si l'envoi échoue : débrancher, maintenir le bouton **BOOT**, rebrancher, relâcher, relancer la commande.
-3. L'écran affiche **Bienvenue** avec un QR code. Avec le téléphone :
-   - scanner le QR code (ou rejoindre le WiFi **Thermo-Horloge**) ;
-   - la page de réglages s'ouvre (sinon aller sur `192.168.4.1`) ;
-   - choisir le WiFi de la maison, son mot de passe, la ville et la pièce, puis **Enregistrer**.
+3. L'écran affiche **Bienvenue**. Deux façons de lui donner le WiFi :
+   - **sans rien taper** : toucher « Bouton WPS » sur l'écran (ou appuyer sur BOOT), puis appuyer
+     sur le bouton WPS de la box dans les 2 minutes ;
+   - **avec le téléphone** : scanner le QR code (ou rejoindre le WiFi **Thermo-Horloge**), la page s'ouvre
+     (sinon `192.168.4.1`), choisir le réseau, coller le mot de passe, la ville et la pièce, puis **Enregistrer**.
+     La page explique comment copier le mot de passe du WiFi depuis un Android ou un iPhone.
+
+   Aucun téléphone ne laisse une application lire ses mots de passe WiFi enregistrés : le WPS ou le
+   copier-coller sont les deux façons d'éviter de le retaper.
+   Après le WPS, la ville se règle ensuite sur la page web (Lyon par défaut).
 4. L'objet redémarre, se connecte, prend l'heure et la météo par internet.
 5. Laisser tourner 30 minutes à côté d'un thermomètre fiable, puis corriger la sonde sur la page web (Étalonnage).
 

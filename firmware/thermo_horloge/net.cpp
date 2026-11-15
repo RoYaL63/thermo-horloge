@@ -4,6 +4,7 @@
 #include <HTTPClient.h>
 #include <DNSServer.h>
 #include <esp_sntp.h>
+#include <esp_wps.h>
 #include "board.h"
 #include "config.h"
 #include "data.h"
@@ -45,7 +46,67 @@ static void stopAp() {
   apUp = false;
 }
 
+// ---------- WPS : la box donne son WiFi quand on appuie sur son bouton WPS, sans mot de passe à taper ----------
+static volatile uint8_t wpsState = 0;   // 0 rien, 1 en attente de la box, 2 reçu, 3 échec, 4 connecté
+static uint32_t wpsAt = 0;
+static String wpsSsid;
+
+uint8_t netWpsState() { return wpsState; }
+String netWpsSsid() { return wpsSsid; }
+int netWpsLeft() { return wpsState == 1 ? max(0, 120 - (int)((millis() - wpsAt) / 1000)) : 0; }
+
+static void onWifiEvent(WiFiEvent_t e, arduino_event_info_t) {   // appelé depuis une autre tâche : on ne fait que noter
+  if (e == ARDUINO_EVENT_WPS_ER_SUCCESS) wpsState = 2;
+  else if ((e == ARDUINO_EVENT_WPS_ER_FAILED || e == ARDUINO_EVENT_WPS_ER_TIMEOUT) && wpsState == 1) wpsState = 3;
+}
+
+void netWpsStart() {
+  if (wpsState == 1 || wpsState == 2) return;
+  WiFi.mode(WIFI_AP_STA);   // le point d'accès reste ouvert pour le téléphone, la station écoute la box
+  esp_wifi_wps_disable();
+  esp_wps_config_t c;
+  memset(&c, 0, sizeof c);
+  c.wps_type = WPS_TYPE_PBC;
+  snprintf(c.factory_info.manufacturer, sizeof c.factory_info.manufacturer, "Thermo-horloge");
+  snprintf(c.factory_info.model_number, sizeof c.factory_info.model_number, "%s", CONFIG_IDF_TARGET);
+  snprintf(c.factory_info.model_name, sizeof c.factory_info.model_name, "Thermo-horloge");
+  snprintf(c.factory_info.device_name, sizeof c.factory_info.device_name, "Thermo-horloge");
+  if (esp_wifi_wps_enable(&c) != ESP_OK) { wpsState = 3; return; }
+#if ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(6, 0, 0)
+  esp_err_t err = esp_wifi_wps_start();
+#else
+  esp_err_t err = esp_wifi_wps_start(0);
+#endif
+  if (err != ESP_OK) { esp_wifi_wps_disable(); wpsState = 3; return; }
+  wpsState = 1;
+  wpsAt = millis();
+  Serial.println("WPS : appuie sur le bouton WPS de la box");
+}
+
+static void wpsLoop() {
+  if (wpsState == 1 && millis() - wpsAt > 125000) { esp_wifi_wps_disable(); wpsState = 3; }
+  if (wpsState == 2) {
+    esp_wifi_wps_disable();
+    WiFi.begin();                 // identifiants reçus de la box, gardés par la puce WiFi
+    wpsState = 5;
+    wpsAt = millis();
+  }
+  if (wpsState == 5) {
+    if (WiFi.status() == WL_CONNECTED) {
+      wpsSsid = WiFi.SSID();
+      cfg.ssid = wpsSsid;
+      cfg.pass = WiFi.psk();
+      cfgSave();
+      wpsState = 4;
+      wpsAt = millis();
+      Serial.printf("WPS : connecte a %s\n", wpsSsid.c_str());
+    } else if (millis() - wpsAt > 25000) wpsState = 3;
+  }
+  if (wpsState == 4 && millis() - wpsAt > 3000) ESP.restart();
+}
+
 void netBegin() {
+  WiFi.onEvent(onWifiEvent);
   WiFi.persistent(false);
   WiFi.setHostname("thermo-horloge");
   if (cfg.ssid.isEmpty()) {
@@ -412,6 +473,7 @@ static void transitUpdate() {
 // ---------- Boucle ----------
 void netLoop() {
   if (apUp) dns.processNextRequest();
+  wpsLoop();
   if (portal) return;
 
   bool on = netOnline();

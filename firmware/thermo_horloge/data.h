@@ -76,6 +76,10 @@ int netRssi();
 bool geocodeCity(const String& name, float& lat, float& lon, String& label);
 void netRefreshSoon();                      // relance météo, agenda et transports dès que possible
 void agendaRebuild();                       // fusionne l'agenda internet et les rappels
+void netWpsStart();                         // écoute le bouton WPS de la box (2 min)
+uint8_t netWpsState();                      // 0 rien, 1 attente, 3 échec, 4 connecté (2 et 5 : en cours)
+String netWpsSsid();
+int netWpsLeft();                           // secondes restantes
 
 // Page web
 void webBegin();
