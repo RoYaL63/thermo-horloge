@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Thermo-horloge</title>
+<meta name="description" content="Horloge murale à écran tactile qui affiche la température de la pièce, la météo, l'agenda et les transports, avec douze thèmes dessinés. Projet libre à refaire chez soi.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Oxanium:wght@600&family=Source+Sans+3:wght@400;600&family=Share+Tech+Mono&display=swap">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="top"><div class="wrap">
+  <a class="brand" href="./">Thermo-horloge <b>v1.0</b></a>
+  <nav aria-label="Sections">
+    <a href="#ecran">Ce qu'elle affiche</a><a href="#themes">Thèmes</a><a href="#nuit">La nuit</a><a href="#reglages">Réglages</a><a href="fabriquer.html">La fabriquer</a>
+  </nav>
+</div></header>
+
+<main>
+<section class="hero"><div class="wrap">
+  <p class="eyebrow">Objet connecté fait maison</p>
+  <h1>Une horloge murale qui sait le temps qu'il fait dedans et dehors</h1>
+  <p class="lede read">Un petit écran tactile de 2,8 pouces, accroché au mur et branché en USB. Il affiche l'heure, la température et l'humidité de la pièce, la météo, la pluie de l'heure qui vient, l'agenda du jour et les prochains passages de tes lignes de transport. Douze thèmes dessinés, de la console de vaisseau au grimoire.</p>
+  <div class="facts"><span>ESP32-C6</span><span>écran 240 × 320</span><span>WiFi</span><span>Open-Meteo, sans clé</span><span>12 thèmes</span><span>9 écrans</span><span>mise à jour sans câble</span></div>
+  <div class="cta"><a class="btn" href="fabriquer.html">Fabriquer la sienne</a><a class="btn alt" href="#themes">Voir les thèmes</a></div>
+  <div class="hero-img"><img src="img/scene-trio.jpg" alt="Trois thermo-horloges posées côte à côte : thème Portail, thème Galaxie et thème Magie, toutes à 18 h 42" width="1600" height="1000"></div>
+  <p class="caption">Illustration. Les écrans sont de vraies captures de la maquette.</p>
+</div></section>
+
+<section id="ecran"><div class="wrap">
+  <p class="eyebrow">Ce qu'elle affiche</p>
+  <h2>Neuf écrans, un geste pour passer de l'un à l'autre</h2>
+  <p class="read">On touche la moitié droite de l'écran pour l'écran suivant, la gauche pour le précédent, ou une icône de la barre du bas pour y aller directement. Chaque écran peut être retiré depuis les réglages.</p>
+  <div class="board">
+    <figure><div class="screen"><img src="img/theme-galaxie.png" alt="Accueil du thème Galaxie" loading="lazy"></div><figcaption><b>Accueil</b><span>Heure, intérieur sur une jauge graduée au demi-degré, extérieur, conseil du jour.</span></figcaption></figure>
+    <figure><div class="screen"><img src="img/ecran-agenda.png" alt="Écran agenda" loading="lazy"></div><figcaption><b>Agenda</b><span>Le prochain rendez-vous en grand, la journée, les rappels.</span></figcaption></figure>
+    <figure><div class="screen"><img src="img/ecran-pluie.png" alt="Écran pluie" loading="lazy"></div><figcaption><b>Pluie</b><span>Deux heures par quart d'heure : « Pluie dans 30 min ».</span></figcaption></figure>
+    <figure><div class="screen"><img src="img/ecran-previsions.png" alt="Écran prévisions" loading="lazy"></div><figcaption><b>Prévisions</b><span>Quatre jours, minimum, maximum, risque de pluie.</span></figcaption></figure>
+    <figure><div class="screen"><img src="img/ecran-confort.png" alt="Écran confort" loading="lazy"></div><figcaption><b>Confort</b><span>Humidité, courbe sur 24 h, point de rosée, correction de la sonde.</span></figcaption></figure>
+    <figure><div class="screen"><img src="img/ecran-sonometre.png" alt="Écran sonomètre" loading="lazy"></div><figcaption><b>Sonomètre</b><span>Le bruit de la pièce, la dernière minute, moyenne et pic.</span></figcaption></figure>
+    <figure><div class="screen"><img src="img/ecran-minuteur.png" alt="Écran minuteur" loading="lazy"></div><figcaption><b>Minuteur</b><span>Plus ou moins une minute, sonnerie à la fin.</span></figcaption></figure>
+    <figure><div class="screen"><img src="img/ecran-ciel.png" alt="Écran soleil et lune" loading="lazy"></div><figcaption><b>Ciel</b><span>Course du soleil, durée du jour, phase de la lune, indice UV.</span></figcaption></figure>
+    <figure><div class="screen"><img src="img/ecran-transports.png" alt="Écran transports" loading="lazy"></div><figcaption><b>Transports</b><span>Trois lignes au choix, à Paris ou à Lyon, et les perturbations.</span></figcaption></figure>
+  </div>
+</div></section>
+
+<section id="themes"><div class="wrap">
+  <p class="eyebrow">Douze thèmes</p>
+  <h2>Chaque thème a son accueil, ses menus et sa veille</h2>
+  <p class="read">Les couleurs se changent thème par thème. Deux accueils supplémentaires vont avec tous : Grande heure, lisible de loin, et Tableau de bord, avec huit infos d'un coup d'œil.</p>
+  <div class="board big">
+    <figure><div class="screen"><img src="img/theme-galaxie.png" alt="Thème Galaxie" loading="lazy"></div><figcaption><b>Galaxie</b><span>Lame lumineuse pour la température, planète qui change avec le temps dehors.</span></figcaption></figure>
+    <figure><div class="screen"><img src="img/theme-obscur.png" alt="Thème Côté obscur" loading="lazy"></div><figcaption><b>Côté obscur</b><span>Pyramide rouge qui tourne dans un anneau de glyphes inventés.</span></figcaption></figure>
+    <figure><div class="screen"><img src="img/theme-cockpit.png" alt="Thème Cockpit" loading="lazy"></div><figcaption><b>Cockpit</b><span>Saut dans les étoiles derrière la verrière, cadrans à aiguille.</span></figcaption></figure>
+    <figure><div class="screen"><img src="img/theme-radar.png" alt="Thème Radar" loading="lazy"></div><figcaption><b>Radar</b><span>Un écho par nuage ou par averse.</span></figcaption></figure>
+    <figure><div class="screen"><img src="img/theme-holo.png" alt="Thème Hologramme" loading="lazy"></div><figcaption><b>Hologramme</b><span>Projection bleue qui grésille, globe en fil de fer.</span></figcaption></figure>
+    <figure><div class="screen"><img src="img/theme-portail.png" alt="Thème Portail" loading="lazy"></div><figcaption><b>Portail</b><span>Anneau de pierre, huit verrous qui s'allument au fil de la minute.</span></figcaption></figure>
+    <figure><div class="screen"><img src="img/theme-assistant.png" alt="Thème Assistant" loading="lazy"></div><figcaption><b>Assistant</b><span>Anneaux en mouvement, phrase tapée lettre à lettre.</span></figcaption></figure>
+    <figure><div class="screen"><img src="img/theme-labo.png" alt="Thème Labo" loading="lazy"></div><figcaption><b>Labo</b><span>L'heure en cases du tableau périodique : 18 h 42, argon et molybdène.</span></figcaption></figure>
+    <figure><div class="screen"><img src="img/theme-grandprix.png" alt="Thème Grand Prix" loading="lazy"></div><figcaption><b>Grand Prix</b><span>Compteur, roulette météo, feux de départ pour le minuteur.</span></figcaption></figure>
+    <figure><div class="screen"><img src="img/theme-bracelet.png" alt="Thème Terminal" loading="lazy"></div><figcaption><b>Terminal</b><span>Écran de poignet rétro à phosphore vert.</span></figcaption></figure>
+    <figure><div class="screen"><img src="img/theme-loutre.png" alt="Thème Loutre" loading="lazy"></div><figcaption><b>Loutre</b><span>Une loutre en 3D pour chaque temps qu'il fait.</span></figcaption></figure>
+    <figure><div class="screen"><img src="img/theme-grimoire.png" alt="Thème Magie" loading="lazy"></div><figcaption><b>Magie</b><span>Parchemin, fiole graduée, sablier, bougie la nuit.</span></figcaption></figure>
+  </div>
+  <div class="split">
+    <div class="read">
+      <h3>Accueils au choix</h3>
+      <p>Grande heure garde l'essentiel en très gros. Tableau de bord réunit l'intérieur, l'extérieur, la pluie, la qualité de l'air, le coucher du soleil, ta prochaine ligne, le bruit et la lune.</p>
+    </div>
+    <div class="board" style="margin-top:0">
+      <figure><div class="screen"><img src="img/variante-grande.png" alt="Accueil Grande heure, thème Assistant" loading="lazy"></div><figcaption><b>Grande heure</b></figcaption></figure>
+      <figure><div class="screen"><img src="img/variante-tableau.png" alt="Accueil Tableau de bord, thème Galaxie" loading="lazy"></div><figcaption><b>Tableau de bord</b></figcaption></figure>
+    </div>
+  </div>
+</div></section>
+
+<section id="nuit"><div class="wrap">
+  <p class="eyebrow">La nuit</p>
+  <h2>Une veille qui ne réveille pas</h2>
+  <div class="split">
+    <img class="photo" src="img/scene-chambre.jpg" alt="Chambre dans le noir, l'horloge affiche l'heure en rouge sombre au-dessus du lit" loading="lazy" width="1600" height="1000">
+    <div class="read">
+      <p>Aux heures choisies, l'écran passe en veille : l'heure en rouge doux, la météo de demain, le lever du soleil et le premier rendez-vous. Trois styles : ambiance, horloge seule, ou écran éteint qu'un toucher réveille huit secondes.</p>
+      <ul class="list">
+        <li><b>Rouge doux</b> par défaut, ou la couleur du thème.</li>
+        <li><b>Respiration</b> : la lumière varie très lentement.</li>
+        <li><b>Anti-marquage</b> : tout bouge d'un pixel par minute.</li>
+      </ul>
+    </div>
+  </div>
+  <div class="board" style="margin-top:36px">
+    <figure><div class="screen"><img src="img/nuit-galaxie.png" alt="Veille Galaxie en rouge" loading="lazy"></div><figcaption><b>Ambiance</b><span>Galaxie, rouge doux</span></figcaption></figure>
+    <figure><div class="screen"><img src="img/nuit-grimoire.png" alt="Veille Magie à la bougie" loading="lazy"></div><figcaption><b>Ambiance</b><span>Magie, à la bougie</span></figcaption></figure>
+    <figure><div class="screen"><img src="img/nuit-loutre.png" alt="Veille Loutre" loading="lazy"></div><figcaption><b>Ambiance</b><span>Loutre zen</span></figcaption></figure>
+    <figure><div class="screen"><img src="img/nuit-horloge.png" alt="Veille horloge seule" loading="lazy"></div><figcaption><b>Horloge seule</b><span>Portail</span></figcaption></figure>
+  </div>
+</div></section>
+
+<section id="reglages"><div class="wrap">
+  <p class="eyebrow">Réglages</p>
+  <h2>Sur l'écran pour l'essentiel, sur le téléphone pour le reste</h2>
+  <div class="split rev">
+    <div class="read">
+      <h3>Premier démarrage sans câble ni appli</h3>
+      <p>L'écran affiche « Bienvenue ». On appuie sur le bouton WPS de la box, et l'horloge récupère le WiFi toute seule. Ou bien on scanne le QR code avec le téléphone : une page s'ouvre pour choisir le réseau, la ville et la pièce, avec la marche à suivre pour copier le mot de passe depuis Android ou iPhone.</p>
+      <h3 style="margin-top:28px">Une page web sur le même WiFi</h3>
+      <p>À l'adresse <code>thermo-horloge.local</code> : ville, thème, couleurs, horaires de nuit, écrans affichés, lien de l'agenda, huit rappels, lignes de transport, étalonnage de la sonde, et mise à jour du firmware sans le débrancher.</p>
+      <h3 style="margin-top:28px">Sur l'objet</h3>
+      <p>Un appui long ouvre trois onglets : Affichage, Maison, Système. Les menus prennent la forme du thème : leviers dans le cockpit, cases cochées au stylo dans le labo, crochets de terminal pour le radar.</p>
+    </div>
+    <div class="board" style="margin-top:0">
+      <figure><div class="screen"><img src="img/ecran-reglages.png" alt="Réglages, onglet Affichage" loading="lazy"></div><figcaption><b>Réglages</b></figcaption></figure>
+      <figure><div class="screen"><img src="img/ecran-ecrans.png" alt="Choix des écrans affichés" loading="lazy"></div><figcaption><b>Écrans affichés</b></figcaption></figure>
+      <figure><div class="screen"><img src="img/ecran-couleurs.png" alt="Choix des couleurs" loading="lazy"></div><figcaption><b>Couleurs</b></figcaption></figure>
+      <figure><div class="screen"><img src="img/ecran-nuitreglage.png" alt="Réglage du mode nuit" loading="lazy"></div><figcaption><b>Mode nuit</b></figcaption></figure>
+    </div>
+  </div>
+</div></section>
+
+<section id="situations"><div class="wrap">
+  <p class="eyebrow">Mises en situation</p>
+  <h2>Au salon, au bureau</h2>
+  <div class="split">
+    <figure><img class="photo" src="img/scene-salon.jpg" alt="Salon : l'horloge au thème Galaxie accrochée au mur au-dessus d'une étagère" loading="lazy" width="1600" height="1000"><figcaption><span>Au mur du salon, câble USB descendant vers l'étagère.</span></figcaption></figure>
+    <figure><img class="photo" src="img/scene-bureau.jpg" alt="Bureau : l'horloge au thème Loutre posée sur un pied à côté d'une tasse" loading="lazy" width="1600" height="1000"><figcaption><span>Sur un pied, au bureau.</span></figcaption></figure>
+  </div>
+  <p class="caption">Illustrations dessinées, pas des photos. Les écrans sont de vraies captures de la maquette.</p>
+</div></section>
+
+<section id="materiel"><div class="wrap">
+  <p class="eyebrow">Sous le capot</p>
+  <h2>Une seule carte, rien à souder</h2>
+  <div class="tablewrap"><table>
+    <thead><tr><th>Élément</th><th>Composant</th><th>Usage</th></tr></thead>
+    <tbody>
+      <tr><td>Carte</td><td>Waveshare ESP32-C6-Touch-LCD-2.8</td><td>tout est intégré, environ 35 €</td></tr>
+      <tr><td>Processeur</td><td>ESP32-C6, RISC-V 160 MHz, 16 Mo de flash</td><td>WiFi 6, Bluetooth 5</td></tr>
+      <tr><td>Écran</td><td>IPS 2,8 pouces, 240 × 320, tactile capacitif</td><td>affichage et commandes</td></tr>
+      <tr><td>Sonde</td><td>SHTC3</td><td>température et humidité de la pièce</td></tr>
+      <tr><td>Horloge</td><td>PCF85063A</td><td>garde l'heure sans internet</td></tr>
+      <tr><td>Audio</td><td>ES8311, micro et haut-parleur</td><td>bips, rappels, sonomètre</td></tr>
+      <tr><td>Données</td><td>Open-Meteo, agenda .ics, PRIM ou Grand Lyon</td><td>météo sans clé, agenda privé, transports</td></tr>
+    </tbody>
+  </table></div>
+  <div class="cta"><a class="btn" href="fabriquer.html">Le guide pour la fabriquer</a></div>
+</div></section>
+</main>
+
+<footer><div class="wrap">
+  <p><b>Thermo-horloge</b>, projet personnel, version 1.0. Code et guide dans ce dépôt.</p>
+  <p>Les thèmes sont des dessins originaux d'ambiance ; ils ne reprennent ni personnage, ni logo, ni interface d'œuvres existantes, et le projet n'est affilié à aucune d'elles. Polices Google Fonts sous licence SIL OFL. Météo : Open-Meteo.</p>
+</div></footer>
+</body>
+</html>

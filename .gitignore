@@ -1,3 +1,8 @@
 tools/
 build/
 tools-src/*.pgm
+tools-src/site/*.dom.html
+tools-src/site/export.html
+tools-src/site/page-*.png
+tools-src/site/mob-*.png
+tools-src/site/scene-*.png

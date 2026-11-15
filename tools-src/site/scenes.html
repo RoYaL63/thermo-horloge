@@ -1,0 +1,88 @@
+<!doctype html>
+<meta charset="utf-8">
+<!-- Mises en situation dessinées en CSS : l'objet au mur, avec de vraies captures d'écran de la maquette.
+     Ouvrir avec #salon, #chambre, #bureau ou #trio ; capture à 1600 × 1000. -->
+<style>
+*{box-sizing:border-box;margin:0}
+html,body{width:1600px;height:1000px;overflow:hidden;background:#000}
+.scene{position:absolute;inset:0;display:none}
+.on{display:block}
+/* L'objet : boîtier noir à bords arrondis, écran 3:4 */
+.dev{position:absolute;background:linear-gradient(145deg,#2a2d33,#0d0e11 55%);border-radius:26px;padding:22px 22px 30px;box-shadow:0 40px 80px -30px rgba(0,0,0,.6),0 6px 14px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.12)}
+.dev img{display:block;width:100%;aspect-ratio:3/4;border-radius:6px}
+.dev::after{content:"";position:absolute;inset:22px 22px 30px;border-radius:6px;background:linear-gradient(120deg,rgba(255,255,255,.10),rgba(255,255,255,0) 38%);pointer-events:none}
+.cable{position:absolute;width:5px;background:#e9e6df;border-radius:3px;box-shadow:1px 0 0 rgba(0,0,0,.15)}
+
+/* Salon */
+#salon{background:linear-gradient(100deg,#e9e1d3 0%,#efe8dc 45%,#ddd3c2 100%)}
+#salon .window{position:absolute;left:-120px;top:-60px;width:620px;height:1200px;background:linear-gradient(90deg,rgba(255,250,235,.55),rgba(255,250,235,0));transform:skewX(-12deg)}
+#salon .shelf{position:absolute;left:300px;right:300px;top:812px;height:22px;background:linear-gradient(#b98b5e,#946a43);border-radius:3px;box-shadow:0 24px 30px -18px rgba(60,40,20,.5)}
+#salon .pot{position:absolute;left:1060px;top:722px;width:96px;height:92px;background:linear-gradient(90deg,#c9c3b8,#efeae2 40%,#b8b1a5);border-radius:6px 6px 22px 22px}
+#salon .leaf{position:absolute;width:56px;height:150px;background:linear-gradient(#5d8a5a,#2f5a3a);border-radius:60% 0;transform-origin:bottom center}
+#salon .book{position:absolute;bottom:188px;height:120px;border-radius:2px}
+#salon .frame{position:absolute;left:330px;top:200px;width:200px;height:260px;border:12px solid #2b2a28;background:#d9cfbf;box-shadow:0 20px 40px -20px rgba(0,0,0,.4)}
+#salon .frame::after{content:"";position:absolute;inset:18px;background:linear-gradient(160deg,#c6b49a,#8d7a63)}
+
+/* Chambre la nuit */
+#chambre{background:radial-gradient(ellipse at 50% 38%,#1b2236 0%,#0d1220 55%,#070a12 100%)}
+#chambre .halo{position:absolute;left:600px;top:120px;width:400px;height:460px;background:radial-gradient(closest-side,rgba(176,32,28,.22),rgba(176,32,28,0));filter:blur(6px)}
+#chambre .head{position:absolute;left:340px;right:340px;top:700px;height:330px;background:linear-gradient(#2a2f3e,#1a1e29);border-radius:28px 28px 0 0;box-shadow:inset 0 2px 0 rgba(255,255,255,.05)}
+#chambre .pillow{position:absolute;top:640px;width:280px;height:120px;background:linear-gradient(#cfd4de,#9aa1b0);border-radius:40px;opacity:.25}
+#chambre .moonlight{position:absolute;right:-100px;top:-100px;width:700px;height:700px;background:radial-gradient(closest-side,rgba(140,170,220,.12),rgba(140,170,220,0))}
+
+/* Bureau */
+#bureau{background:linear-gradient(#f3efe6,#e6dfd1)}
+#bureau .tiles{position:absolute;inset:0 0 340px 0;background-image:linear-gradient(rgba(0,0,0,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(0,0,0,.05) 1px,transparent 1px);background-size:80px 80px}
+#bureau .desk{position:absolute;left:0;right:0;top:660px;bottom:0;background:linear-gradient(#8a6a4a,#6d5238);box-shadow:inset 0 6px 0 #a3815e}
+#bureau .stand{position:absolute;left:1000px;top:560px;width:150px;height:110px;background:linear-gradient(#3a3c40,#1d1e21);clip-path:polygon(20% 0,80% 0,100% 100%,0 100%)}
+#bureau .mug{position:absolute;left:480px;top:560px;width:110px;height:120px;background:linear-gradient(90deg,#d65b3a,#f07a55 45%,#b8462b);border-radius:8px 8px 26px 26px}
+#bureau .mug::after{content:"";position:absolute;right:-42px;top:26px;width:44px;height:56px;border:12px solid #c9502f;border-left:0;border-radius:0 30px 30px 0}
+#bureau .note{position:absolute;left:230px;top:600px;width:190px;height:70px;background:#fbf3c9;transform:rotate(-4deg);box-shadow:0 8px 16px -8px rgba(0,0,0,.35)}
+
+/* Trio */
+#trio{background:radial-gradient(ellipse at 50% 30%,#232a38,#0b0e14 70%)}
+#trio .floor{position:absolute;left:0;right:0;top:820px;bottom:0;background:linear-gradient(#141821,#0b0e14)}
+.refl{position:absolute;top:836px;height:140px;border-radius:20px;background:linear-gradient(rgba(255,255,255,.06),rgba(255,255,255,0));filter:blur(2px)}
+</style>
+
+<div class="scene" id="salon">
+  <div class="window"></div>
+  <div class="frame"></div>
+  <div class="dev" style="left:640px;top:150px;width:330px"><img src="../../docs/img/theme-galaxie.png" alt=""></div>
+  <div class="cable" style="left:802px;top:600px;height:212px"></div>
+  <div class="shelf"></div>
+  <div class="book" style="left:420px;width:34px;background:#4b5d73"></div>
+  <div class="book" style="left:458px;width:28px;height:104px;background:#a5583c"></div>
+  <div class="book" style="left:490px;width:38px;height:128px;background:#d2b56f"></div>
+  <div class="pot"></div>
+  <div class="leaf" style="left:1066px;top:590px;transform:rotate(-28deg)"></div>
+  <div class="leaf" style="left:1092px;top:570px;transform:rotate(6deg)"></div>
+  <div class="leaf" style="left:1116px;top:600px;transform:rotate(34deg)"></div>
+</div>
+
+<div class="scene" id="chambre">
+  <div class="moonlight"></div>
+  <div class="halo"></div>
+  <div class="dev" style="left:650px;top:150px;width:300px"><img src="../../docs/img/nuit-galaxie.png" alt=""></div>
+  <div class="head"></div>
+  <div class="pillow" style="left:430px"></div>
+  <div class="pillow" style="left:890px"></div>
+</div>
+
+<div class="scene" id="bureau">
+  <div class="tiles"></div>
+  <div class="desk"></div>
+  <div class="note"></div>
+  <div class="mug"></div>
+  <div class="dev" style="left:935px;top:140px;width:280px;transform:rotate(-1.5deg)"><img src="../../docs/img/theme-loutre.png" alt=""></div>
+  <div class="stand"></div>
+</div>
+
+<div class="scene" id="trio">
+  <div class="floor"></div>
+  <div class="dev" style="left:200px;top:250px;width:300px;transform:perspective(1200px) rotateY(18deg)"><img src="../../docs/img/theme-portail.png" alt=""></div>
+  <div class="dev" style="left:640px;top:180px;width:330px"><img src="../../docs/img/theme-galaxie.png" alt=""></div>
+  <div class="dev" style="left:1100px;top:250px;width:300px;transform:perspective(1200px) rotateY(-18deg)"><img src="../../docs/img/theme-grimoire.png" alt=""></div>
+  <div class="refl" style="left:640px;width:330px"></div>
+</div>
+<script>document.getElementById((location.hash || '#salon').slice(1)).classList.add('on');</script>

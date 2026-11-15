@@ -1,7 +1,9 @@
 # Thermo-horloge murale
 
 Firmware de la thermo-horloge sur la carte Waveshare **ESP32-C6-Touch-LCD-2.8**, version 1.0.0.
-Maquette des écrans : https://claude.ai/artifact/PcZGaXmPJyaAnHCyXBNLbC
+
+- Présentation et guide pour la fabriquer : dossier [`docs/`](docs/index.html), publié en GitHub Pages.
+- Maquette interactive de tous les écrans : [`tools-src/site/maquette.html`](tools-src/site/maquette.html).
 
 ## Mercredi : premier branchement
 

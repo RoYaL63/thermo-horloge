@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fabriquer la thermo-horloge</title>
+<meta name="description" content="Guide pas à pas pour refaire la thermo-horloge : matériel, outils, envoi du firmware, premier démarrage, réglages, personnalisation et dépannage.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Oxanium:wght@600&family=Source+Sans+3:wght@400;600&family=Share+Tech+Mono&display=swap">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="top"><div class="wrap">
+  <a class="brand" href="./">Thermo-horloge <b>v1.0</b></a>
+  <nav aria-label="Étapes">
+    <a href="#materiel">Matériel</a><a href="#outils">Outils</a><a href="#envoyer">Envoyer</a><a href="#demarrer">Démarrer</a><a href="#perso">Personnaliser</a><a href="#depannage">Dépannage</a>
+  </nav>
+</div></header>
+
+<main>
+<section class="hero"><div class="wrap read">
+  <p class="eyebrow">Guide</p>
+  <h1>Fabriquer la sienne</h1>
+  <p class="lede">Compter une heure la première fois, dont la moitié à attendre les téléchargements. Rien à souder : une carte, un câble, un ordinateur sous Windows, macOS ou Linux.</p>
+</div></section>
+
+<section id="materiel"><div class="wrap read">
+  <p class="eyebrow">Étape 1</p>
+  <h2>Le matériel</h2>
+  <ul class="list">
+    <li><b>Carte Waveshare ESP32-C6-Touch-LCD-2.8</b> (environ 35 €). Vérifier « ESP32-C6 » et « 2.8 » dans le nom : d'autres cartes proches n'ont pas le même brochage.</li>
+    <li><b>Câble USB-C de données</b>. Beaucoup de câbles ne font que charger : si l'ordinateur ne voit pas la carte, changer de câble en premier.</li>
+    <li><b>Chargeur USB 5 V</b> pour l'usage au quotidien. Un vieux chargeur de téléphone suffit.</li>
+    <li><b>Pour l'accrocher</b> : adhésif repositionnable, petit pied de téléphone, ou cadre photo dont on découpe le fond. Laisser de l'air derrière la carte : la sonde est sur la carte et le moindre confinement la réchauffe.</li>
+  </ul>
+</div></section>
+
+<section id="outils"><div class="wrap read">
+  <p class="eyebrow">Étape 2</p>
+  <h2>Les outils</h2>
+  <p>Télécharger le projet depuis GitHub (bouton <b>Code &gt; Download ZIP</b>, ou <code>git clone</code>). Ensuite, deux chemins au choix.</p>
+  <ol class="steps">
+    <li><div>
+      <h3>En ligne de commande, avec arduino-cli</h3>
+      <p>Installer <a href="https://arduino.github.io/arduino-cli/latest/installation/">arduino-cli</a>, puis, depuis le dossier du projet, créer <code>tools/arduino-cli.yaml</code> :</p>
+<pre>board_manager:
+  additional_urls:
+    - https://espressif.github.io/arduino-esp32/package_esp32_index.json
+directories:
+  data: ./tools/arduino15
+  downloads: ./tools/arduino15/staging
+  user: ./tools/sketchbook</pre>
+      <p>Puis installer le support ESP32 et la bibliothèque graphique (environ 500 Mo) :</p>
+<pre>arduino-cli --config-file tools/arduino-cli.yaml core update-index
+arduino-cli --config-file tools/arduino-cli.yaml core install esp32:esp32@3.3.12
+arduino-cli --config-file tools/arduino-cli.yaml lib install LovyanGFX@1.3.0</pre>
+      <p class="note">Le script <code>build.sh</code> du projet attend arduino-cli dans <code>tools/arduino-cli/</code>. Sous macOS ou Linux, adapter la variable <code>CLI</code> en tête du script.</p>
+    </div></li>
+    <li><div>
+      <h3>Ou avec l'IDE Arduino</h3>
+      <p>Dans <b>Préférences</b>, ajouter l'adresse <code>https://espressif.github.io/arduino-esp32/package_esp32_index.json</code>. Installer <b>esp32 par Espressif</b>, version 3.3.12, puis la bibliothèque <b>LovyanGFX</b>. Ouvrir <code>firmware/thermo_horloge/thermo_horloge.ino</code> et régler le menu <b>Outils</b> :</p>
+      <div class="tablewrap"><table>
+        <tbody>
+          <tr><th>Carte</th><td>ESP32C6 Dev Module</td></tr>
+          <tr><th>Flash Size</th><td>16MB (128Mb)</td></tr>
+          <tr><th>Flash Mode</th><td>QIO</td></tr>
+          <tr><th>Partition Scheme</th><td>16M Flash (3MB APP/9.9MB FATFS)</td></tr>
+          <tr><th>USB CDC On Boot</th><td>Enabled</td></tr>
+        </tbody>
+      </table></div>
+    </div></li>
+  </ol>
+</div></section>
+
+<section id="envoyer"><div class="wrap read">
+  <p class="eyebrow">Étape 3</p>
+  <h2>Envoyer le firmware sur la carte</h2>
+  <p>Brancher la carte, puis :</p>
+<pre>./build.sh auto</pre>
+  <p>Le script trouve la carte, compile (deux à trois minutes la première fois) et l'envoie. Avec l'IDE Arduino : choisir le port de la carte et cliquer sur <b>Téléverser</b>.</p>
+  <p class="note">Si l'envoi échoue : débrancher, maintenir le bouton <b>BOOT</b> de la carte, rebrancher, relâcher, recommencer.</p>
+  <p>Pour lire ce que raconte la carte (capteurs trouvés, mesures, erreurs) : <code>./build.sh monitor</code>, ou le moniteur série de l'IDE à 115200 bauds.</p>
+</div></section>
+
+<section id="demarrer"><div class="wrap">
+  <div class="read">
+    <p class="eyebrow">Étape 4</p>
+    <h2>Premier démarrage</h2>
+  </div>
+  <div class="split">
+    <div class="read">
+      <p>L'écran affiche <b>Bienvenue</b>. Deux façons de lui donner le WiFi :</p>
+      <ul class="list">
+        <li><b>Sans rien taper</b> : toucher <b>Bouton WPS</b> sur l'écran (ou appuyer sur BOOT), puis le bouton WPS de la box dans les deux minutes.</li>
+        <li><b>Avec le téléphone</b> : scanner le QR code, ou rejoindre le WiFi <b>Thermo-Horloge</b>. La page s'ouvre (sinon <code>192.168.4.1</code>). Choisir le réseau, coller le mot de passe, indiquer la ville et la pièce.</li>
+      </ul>
+      <p>L'horloge redémarre, prend l'heure et la météo par internet. La page de réglages est ensuite sur <code>http://thermo-horloge.local</code>, ou à l'adresse affichée dans Réglages &gt; Système.</p>
+      <p class="note">Aucun téléphone ne laisse une application lire ses mots de passe WiFi enregistrés. Le WPS ou le copier-coller évitent de le retaper.</p>
+    </div>
+    <div class="board" style="margin-top:0">
+      <figure><div class="screen"><img src="img/ecran-wifi.png" alt="Écran de connexion WiFi" loading="lazy"></div><figcaption><b>Connexion</b><span>vue de la maquette</span></figcaption></figure>
+      <figure><div class="screen"><img src="img/ecran-miseajour.png" alt="Écran de mise à jour" loading="lazy"></div><figcaption><b>Mise à jour</b><span>vue de la maquette</span></figcaption></figure>
+    </div>
+  </div>
+</div></section>
+
+<section id="regler"><div class="wrap read">
+  <p class="eyebrow">Étape 5</p>
+  <h2>Régler</h2>
+  <ol class="steps">
+    <li><div><h3>Étalonner la sonde</h3><p>La carte chauffe un peu sa propre sonde. Laisser l'horloge allumée trente minutes à côté d'un thermomètre fiable, puis reporter l'écart dans la page web, rubrique Étalonnage. Par défaut, 2,1 °C sont retranchés.</p></div></li>
+    <li><div><h3>Ajouter l'agenda</h3><p>Google Agenda : Paramètres de l'agenda &gt; <b>Adresse secrète au format iCal</b>. iCloud : partager l'agenda en public et copier le lien. Coller le lien dans la page web. Les rendez-vous répétés (chaque jour, chaque semaine, chaque mois, anniversaires) sont pris en compte.</p></div></li>
+    <li><div><h3>Ajouter ses lignes de transport</h3><p><b>Paris</b> : créer un compte gratuit sur <a href="https://prim.iledefrance-mobilites.fr/">PRIM</a>, demander une clé pour l'API « Prochains passages », puis indiquer pour chaque ligne l'identifiant de l'arrêt (forme <code>STIF:StopPoint:Q:…:</code>). <b>Lyon</b> : créer un compte sur <a href="https://data.grandlyon.com/">data.grandlyon.com</a> et demander l'accès aux données TCL temps réel.</p></div></li>
+    <li><div><h3>Écrire des rappels</h3><p>Jusqu'à huit, avec une heure, un texte et l'option « chaque jour ». L'horloge bipe et affiche le message.</p></div></li>
+    <li><div><h3>Si le toucher tombe à côté</h3><p>Page web, rubrique Étalonnage : inverser X et Y, ou activer un miroir. Le moniteur série affiche les coordonnées de chaque toucher pour vérifier.</p></div></li>
+  </ol>
+</div></section>
+
+<section id="maj"><div class="wrap read">
+  <p class="eyebrow">Étape 6</p>
+  <h2>Mettre à jour sans câble</h2>
+  <p>Compiler avec <code>./build.sh</code>, puis ouvrir la page web, <b>Mettre à jour le firmware</b>, et choisir <code>build/thermo_horloge.ino.bin</code>. Les réglages sont conservés.</p>
+</div></section>
+
+<section id="perso"><div class="wrap read">
+  <p class="eyebrow">Aller plus loin</p>
+  <h2>Personnaliser</h2>
+  <div class="tablewrap"><table>
+    <thead><tr><th>Pour</th><th>Où</th></tr></thead>
+    <tbody>
+      <tr><td>Changer les couleurs d'un thème</td><td>page web, ou <code>PALS</code> dans <code>ui.cpp</code></td></tr>
+      <tr><td>Créer un thème</td><td>une ligne dans <code>PALS</code> et <code>KITS</code> (<code>ui.cpp</code>), un accueil dans <code>homes.cpp</code>, son nom dans <code>config.cpp</code></td></tr>
+      <tr><td>Changer ou ajouter une police</td><td><code>tools-src/fontgen.html</code>, rendu dans Chrome, puis <code>node tools-src/fonts2c.js</code></td></tr>
+      <tr><td>Remplacer les images de loutres</td><td>déposer des PNG dans <code>tools-src/img</code>, puis <code>node tools-src/img2c.js</code></td></tr>
+      <tr><td>Ajouter un écran</td><td><code>ScreenId</code> dans <code>config.h</code>, une fonction <code>scr…</code> dans <code>ui.cpp</code></td></tr>
+      <tr><td>Changer la sonde ou la carte</td><td><code>board.h</code> et <code>board.cpp</code> : brochage et pilotes</td></tr>
+    </tbody>
+  </table></div>
+  <p>La maquette interactive de tous les écrans se trouve dans <code>tools-src/site</code> : elle sert à dessiner un écran avant de le coder, et à produire les images de ce site.</p>
+</div></section>
+
+<section id="depannage"><div class="wrap read">
+  <p class="eyebrow">Dépannage</p>
+  <h2>Si quelque chose cloche</h2>
+  <div class="tablewrap"><table>
+    <thead><tr><th>Ce qu'on voit</th><th>Ce qu'on fait</th></tr></thead>
+    <tbody>
+      <tr><td>L'ordinateur ne voit pas la carte</td><td>changer de câble USB-C (câble de données)</td></tr>
+      <tr><td>L'envoi échoue</td><td>maintenir BOOT en branchant la carte, puis renvoyer</td></tr>
+      <tr><td>Écran noir</td><td>moniteur série : « Expandeur CH32 absent » indique un souci sur le bus I2C (mauvaise carte ?)</td></tr>
+      <tr><td>Couleurs inversées</td><td>dans <code>board.h</code>, passer <code>cfg.invert</code> à <code>false</code></td></tr>
+      <tr><td>Toucher décalé</td><td>page web, rubrique Étalonnage</td></tr>
+      <tr><td>Pas de météo</td><td>vérifier la ville dans la page web, et la connexion WiFi (barres en haut à droite)</td></tr>
+      <tr><td>Température trop haute</td><td>étalonner la sonde ; éviter de coller la carte au mur ou dans un boîtier fermé</td></tr>
+      <tr><td>Changer de WiFi</td><td>Réglages &gt; Système &gt; Oublier le WiFi (toucher deux fois), puis refaire l'étape 4</td></tr>
+    </tbody>
+  </table></div>
+</div></section>
+</main>
+
+<footer><div class="wrap">
+  <p><a href="./">Retour à la présentation</a></p>
+  <p>Brochage et composants vérifiés sur le <a href="https://docs.waveshare.com/ESP32-C6-Touch-LCD-2.8">wiki Waveshare</a> et ses <a href="https://github.com/waveshareteam/ESP32-C6-Touch-LCD-2.8">exemples</a>. Polices Google Fonts sous licence SIL OFL.</p>
+</div></footer>
+</body>
+</html>

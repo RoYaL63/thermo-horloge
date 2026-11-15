@@ -1,0 +1,10 @@
+<!doctype html><meta charset=utf-8><body style="margin:0">
+<iframe id=a src="../../docs/index.html" style="width:375px;height:800px;border:0"></iframe>
+<iframe id=b src="../../docs/fabriquer.html" style="width:375px;height:800px;border:0"></iframe>
+<pre id=out></pre>
+<script>
+setTimeout(()=>{const r=[];for(const id of ['a','b']){const d=document.getElementById(id).contentDocument;const w=d.documentElement.clientWidth;
+const over=[...d.querySelectorAll('body *')].filter(e=>{const b=e.getBoundingClientRect();return b.right>w+1&&!e.closest('.tablewrap,pre')}).map(e=>e.tagName+'.'+e.className+'='+Math.round(e.getBoundingClientRect().right)).slice(0,8);
+r.push(id+' largeur '+w+' document '+d.documentElement.scrollWidth+' depassements: '+over.join(' | '))}
+document.getElementById('out').textContent='RES\n'+r.join('\n')},3000)
+</script>
