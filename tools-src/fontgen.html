@@ -1,0 +1,62 @@
+<!doctype html>
+<meta charset="utf-8">
+<!-- Génère des polices lissées au format VLW (lu par LovyanGFX) à partir des polices Google, rendues par le navigateur. -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Oxanium:wght@600&family=Share+Tech+Mono&family=Cinzel:wght@700&family=IM+Fell+English:ital@1&family=IM+Fell+English+SC&family=Bangers&family=Caveat:wght@600&display=block">
+<body><pre id="out">EN COURS</pre>
+<script>
+const TXT = Array.from({length:95},(_,i)=>String.fromCharCode(32+i)).join('') + 'ÀÂÄÇÉÈÊËÎÏÔÖÙÛÜàâäçéèêëîïôöùûüŒœ°·’«»…–';
+const DIG = ' 0123456789:-+%°.,/';
+const SPECS = [
+  ['MONO10',  "'Share Tech Mono'", 400, '', 11, TXT],
+  ['MONO13',  "'Share Tech Mono'", 400, '', 14, TXT],
+  ['NUM18',   'Oxanium', 600, '', 18, TXT],
+  ['NUM26',   'Oxanium', 600, '', 27, TXT],
+  ['CLOCK',   'Oxanium', 600, '', 58, DIG],
+  ['CLOCKXL', 'Oxanium', 600, '', 80, DIG],
+  ['MONOCLK', "'Share Tech Mono'", 400, '', 54, DIG],
+  ['SERIF14', "'IM Fell English'", 400, 'italic', 15, TXT],
+  ['SC14',    "'IM Fell English SC'", 400, '', 15, TXT],
+  ['CINZEL',  'Cinzel', 700, '', 52, DIG],
+  ['CINZEL26','Cinzel', 700, '', 26, DIG],
+  ['BANG16',  'Bangers', 400, '', 16, TXT],
+  ['BANGCLK', 'Bangers', 400, '', 64, DIG],
+  ['HAND16',  'Caveat', 600, '', 18, TXT],
+];
+function be32(arr, v){ arr.push((v>>>24)&255,(v>>>16)&255,(v>>>8)&255,v&255) }
+async function build([name, fam, wt, st, size, chars]){
+  const font = `${st} ${wt} ${size}px ${fam}`.trim();
+  await document.fonts.load(font, chars);
+  const cv = document.createElement('canvas'), c = cv.getContext('2d');
+  cv.width = size*3; cv.height = size*3; c.font = font;
+  const cps = [...new Set([...chars].map(ch=>ch.codePointAt(0)))].sort((a,b)=>a-b);
+  const glyphs = []; let asc = 0, desc = 0;
+  for (const cp of cps) {
+    const ch = String.fromCodePoint(cp), m = c.measureText(ch);
+    const l = Math.ceil(m.actualBoundingBoxLeft), r = Math.ceil(m.actualBoundingBoxRight);
+    const a = Math.ceil(m.actualBoundingBoxAscent), d = Math.ceil(m.actualBoundingBoxDescent);
+    let w = Math.max(0, l + r), h = Math.max(0, a + d);
+    if (cp === 32) { w = 0; h = 0; }
+    let bmp = [];
+    if (w && h) {
+      c.clearRect(0,0,cv.width,cv.height); c.fillStyle = '#fff'; c.textBaseline = 'alphabetic';
+      c.fillText(ch, l + 2, a + 2);
+      const id = c.getImageData(2, 2, w, h).data;
+      for (let i = 3; i < id.length; i += 4) bmp.push(id[i]);
+    }
+    asc = Math.max(asc, a); desc = Math.max(desc, d);
+    glyphs.push({cp, w, h, adv: Math.round(m.width), dY: a, dX: -l, bmp});
+  }
+  const out = [];
+  be32(out, glyphs.length); be32(out, 11); be32(out, size); be32(out, 0); be32(out, asc); be32(out, desc);
+  for (const g of glyphs) { be32(out,g.cp); be32(out,g.h); be32(out,g.w); be32(out,g.adv); be32(out,g.dY); be32(out,g.dX); be32(out,0); }
+  for (const g of glyphs) out.push(...g.bmp);
+  let bin = ''; for (const b of out) bin += String.fromCharCode(b);
+  return name + ' ' + btoa(bin);
+}
+(async () => {
+  await document.fonts.ready;
+  const res = [];
+  for (const s of SPECS) res.push(await build(s));
+  document.getElementById('out').textContent = 'FONTS\n' + res.join('\n') + '\nFIN';
+})();
+</script>
