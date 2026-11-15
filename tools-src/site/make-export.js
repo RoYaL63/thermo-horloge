@@ -32,7 +32,7 @@ setTimeout(() => {
       .forEach(([n, s]) => shot('ecran-' + n, 'galaxie', s));
     [['grandprix',3],['loutre',1],['grimoire',1],['labo',2],['portail',6]].forEach(([t, s]) => shot('ecran-' + t + '-' + s, t, s));
     shot('variante-grande', 'assistant', 0, { v: 1 });
-    shot('variante-tableau', 'galaxie', 0, { v: 2 });
+    shot('variante-tableau', 'galaxie', 0, { v: 3 });
     shot('nuit-galaxie', 'galaxie', 5, { ns: 0, nc: 0 });
     shot('nuit-grimoire', 'grimoire', 5, { ns: 0, nc: 1 });
     shot('nuit-loutre', 'loutre', 5, { ns: 0, nc: 1 });
