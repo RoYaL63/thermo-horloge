@@ -53,6 +53,17 @@ const esc=s=>String(s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&g
 const LYC={A:'#e2001a',B:'#0069b4',C:'#f39200',D:'#00a04b',F1:'#97bf0d',F2:'#97bf0d',RX:'#e3051b'};
 const lyCol=l=>LYC[l]||(/^T\d/.test(l)?'#6a2c91':/^C\d/.test(l)?'#d6007e':'#6f7780');
 function srch(k){clearTimeout(tm);tm=setTimeout(()=>go(k),450)}
+// Terminus et couleur officielle de chaque ligne TCL, par sens (couches publiques bus, métro/funiculaire, tram)
+async function lyLines(codes){
+  const m={};if(!codes.length)return m;
+  const f='ligne IN ('+codes.map(c=>"'"+c.replace(/'/g,"''")+"'").join(',')+')';
+  await Promise.all(['tcllignebus_2_0_0','tcllignemf_2_0_0','tcllignetram_2_0_0'].map(async L=>{try{
+    const u='https://download.data.grandlyon.com/wfs/rdata?SERVICE=WFS&VERSION=2.0.0&request=GetFeature&typename=tcl_sytral.'+L+'&outputFormat=application/json&propertyName=ligne,sens,nom_destination,couleur_hex&CQL_FILTER='+encodeURIComponent(f);
+    const j=await (await fetch(u)).json();
+    for(const x of j.features){const p=x.properties,k=p.ligne+'|'+(p.sens=='Aller'?'A':'R');(m[k]=m[k]||{d:new Set(),c:p.couleur_hex}).d.add(p.nom_destination)}
+  }catch(e){}}));
+  return m;
+}
 async function go(k){
   const q=$('q'+k).value.trim(),out=$('r'+k);
   if(q.length<3){out.innerHTML='';return}
@@ -63,8 +74,13 @@ async function go(k){
     if(mode()==2){
       const u='https://download.data.grandlyon.com/wfs/rdata?SERVICE=WFS&VERSION=2.0.0&request=GetFeature&typename=tcl_sytral.tclarret&outputFormat=application/json&count=40&propertyName=id,nom,desserte,commune,adresse&CQL_FILTER='+encodeURIComponent("nom ILIKE '%"+q.replace(/'/g,"''")+"%'");
       const j=await (await fetch(u)).json();
-      for(const f of j.features){const p=f.properties;for(const ds of String(p.desserte||'').split(',')){if(!ds)continue;const [l,s]=ds.split(':');
-        items.push({lb:l,stop:String(p.id),fi:l,sn:p.nom,co:lyCol(l),info:(s=='A'?'sens aller':'sens retour')+(p.adresse?' · '+p.adresse.toLowerCase():'')+(p.commune?', '+p.commune:'')})}}
+      const raw=[];
+      for(const f of j.features){const p=f.properties;for(const ds of String(p.desserte||'').split(',')){if(!ds)continue;const [l,s]=ds.split(':');raw.push({l,s,p})}}
+      const L=await lyLines([...new Set(raw.map(r=>r.l))]);
+      for(const {l,s,p} of raw){const x=L[l+'|'+s];
+        items.push({lb:l,stop:String(p.id),fi:l,sn:p.nom,co:(x&&x.c)||lyCol(l),
+          known:!!x,info:(x?'vers '+[...x.d].join(' ou '):'terminus non publié par le TCL')+(p.adresse?' · '+p.adresse.toLowerCase():'')+(p.commune?', '+p.commune:'')})}
+      items.sort((a,b)=>(b.known?1:0)-(a.known?1:0));
     }else{
       const u='https://data.iledefrance-mobilites.fr/api/explore/v2.1/catalog/datasets/arrets-lignes/records?limit=40&where='+encodeURIComponent('search(stop_name,"'+q.replace(/"/g,'')+'")');
       const j=await (await fetch(u)).json();
