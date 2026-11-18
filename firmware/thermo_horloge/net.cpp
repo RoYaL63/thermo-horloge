@@ -33,6 +33,7 @@ static void startAp() {
   if (apUp) return;
   WiFi.mode(cfg.ssid.length() ? WIFI_AP_STA : WIFI_AP);
   WiFi.softAP("Thermo-Horloge");
+  WiFi.AP.enableDhcpCaptivePortal();   // annonce la page au téléphone (option DHCP 114) : Android l'ouvre tout seul
   dns.start(53, "*", WiFi.softAPIP());
   apUp = true;
   Serial.printf("Point d'acces Thermo-Horloge, page %s\n", WiFi.softAPIP().toString().c_str());

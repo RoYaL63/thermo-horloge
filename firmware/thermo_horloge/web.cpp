@@ -249,6 +249,16 @@ void webBegin() {
                ",\"out\":" + String(isnan(wx.t) ? 0 : wx.t, 1) + ",\"version\":\"" FW_VERSION "\"}";
     server.send(200, "application/json", j);
   });
+  // Adresses que les téléphones et ordinateurs testent pour détecter un portail : on les renvoie vers la page
+  static const char* const PROBES[] = {"/generate_204", "/gen_204", "/hotspot-detect.html", "/library/test/success.html",
+                                       "/connecttest.txt", "/ncsi.txt", "/success.txt", "/canonical.html", "/redirect", "/mobile/status.php"};
+  for (const char* p : PROBES) server.on(p, []() {
+    if (netPortal() || (WiFi.getMode() & WIFI_AP)) {
+      server.sendHeader("Location", "http://" + WiFi.softAPIP().toString() + "/");
+      server.sendHeader("Cache-Control", "no-store");
+      server.send(302, "text/html", "<a href=\"http://" + WiFi.softAPIP().toString() + "/\">Réglages de la thermo-horloge</a>");
+    } else server.send(204);
+  });
   server.onNotFound([]() {
     if (netPortal() || WiFi.getMode() & WIFI_AP) { server.sendHeader("Location", "http://" + WiFi.softAPIP().toString() + "/"); server.send(302); }
     else server.send(404, "text/plain", "Page introuvable");
