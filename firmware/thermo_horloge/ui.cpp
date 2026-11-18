@@ -1090,7 +1090,7 @@ void uiLoop() {
     static uint32_t retry = 0;
     if (millis() - retry > 10000) { retry = millis(); uiRestoreFrame(); }
   }
-  uint32_t period = 1000;   // une image par seconde : le processeur chauffe moins la sonde (redessin immédiat après un toucher)
+  uint32_t period = asleep ? 1000 : 200;   // 5 images par seconde (mesuré : ralentir ne réduisait la chauffe que de quelques dixièmes)
   if (millis() - lastDraw < period) return;
   lastDraw = millis();
   buildCarousel();

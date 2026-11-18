@@ -87,7 +87,7 @@ static void checkReminders() {
 
 void setup() {
   Serial.begin(115200);
-  setCpuFrequencyMhz(80);   // 80 MHz suffisent et chauffent moins la sonde voisine
+  // Processeur à 160 MHz : le passer à 80 MHz ne changeait presque rien à la chauffe de la sonde (mesuré)
   delay(300);
   Serial.println("\nThermo-horloge " FW_VERSION);
   setenv("TZ", "CET-1CEST,M3.5.0,M10.5.0/3", 1);
