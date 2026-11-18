@@ -23,6 +23,10 @@ static String hex6(uint32_t c) { char b[8]; snprintf(b, sizeof b, "#%06X", (unsi
 static uint32_t parseHex(const String& s) { return (uint32_t)strtoul(s.c_str() + (s.startsWith("#") ? 1 : 0), nullptr, 16); }
 static String chk(bool v) { return v ? " checked" : ""; }
 static String sel(bool v) { return v ? " selected" : ""; }
+// Rubrique repliable : titre, état résumé à droite, ouverte ou non au chargement
+static String secOpen(const String& title, const String& state, bool open) {
+  return "<details class=card" + String(open ? " open" : "") + "><summary>" + title + (state.length() ? "<span>" + state + "</span>" : "") + "</summary>";
+}
 static String opt(int v, int cur, const String& label) { return "<option value=\"" + String(v) + "\"" + sel(v == cur) + ">" + label + "</option>"; }
 
 static const char CSS[] PROGMEM = R"(<style>
@@ -31,7 +35,12 @@ static const char CSS[] PROGMEM = R"(<style>
 body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.45 system-ui,sans-serif;padding:16px}
 main{max-width:620px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
 h1{font-size:22px;margin:4px 0}h2{font-size:15px;margin:0 0 8px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
-section{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:10px}
+section,details.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:10px}
+details.card{display:block;padding:0 14px}details.card[open]{padding-bottom:14px}details.card>:not(summary){margin:0 0 10px}
+summary{list-style:none;cursor:pointer;padding:14px 0;display:flex;justify-content:space-between;gap:10px;font:600 15px system-ui;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+summary::-webkit-details-marker{display:none}summary span{text-transform:none;letter-spacing:0;font-weight:400;color:var(--acc);text-align:right}
+summary::after{content:'+';color:var(--muted)}details[open]>summary::after{content:'−'}summary span+*{display:none}
+[hidden]{display:none!important}
 label{display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--muted)}
 .row{display:flex;flex-wrap:wrap;gap:10px}.row>label{flex:1 1 140px}
 .ck{flex-direction:row;align-items:center;gap:8px;color:var(--fg);font-size:14px}
@@ -125,7 +134,7 @@ static void sendPage() {
   h += F("<form method=post action=/save>");
 
   // WiFi
-  h += F("<section><h2>WiFi</h2>");
+  h += secOpen("WiFi", netPortal() ? String("") : esc(cfg.ssid), netPortal());
   if (netPortal()) {
     h += F("<p class=hint>Choisis le WiFi de la maison. L'objet redémarre et s'y connecte.</p><label>Réseau<select name=ssid>");
     int n = WiFi.scanComplete();
@@ -141,15 +150,15 @@ static void sendPage() {
   } else {
     h += "<p class=hint>Connecté à " + esc(cfg.ssid) + " (" + String(netRssi()) + " dBm). Pour changer de réseau : Réglages &gt; Système &gt; Oublier le WiFi.</p>";
   }
-  h += F("</section>");
+  h += F("</details>");
 
   // Lieu
-  h += "<section><h2>Lieu</h2><div class=row><label>Ville (pour la météo)<input name=city value=\"" + esc(cfg.city) + "\"></label>";
+  h += secOpen("Lieu", esc(cfg.room) + " · " + esc(cfg.city), true) + "<div class=row><label>Ville (pour la météo)<input name=city value=\"" + esc(cfg.city) + "\"></label>";
   h += "<label>Pièce<input name=room value=\"" + esc(cfg.room) + "\" maxlength=14></label></div>";
-  h += "<p class=hint>Position : " + String(cfg.lat, 3) + ", " + String(cfg.lon, 3) + "</p></section>";
+  h += "<p class=hint>Position : " + String(cfg.lat, 3) + ", " + String(cfg.lon, 3) + "</p></details>";
 
   // Affichage
-  h += F("<section><h2>Affichage</h2><div class=row><label>Thème<select name=theme>");
+  h += secOpen("Affichage", THEME_NAMES[cfg.theme], true) + F("<div class=row><label>Thème<select name=theme>");
   for (int i = 0; i < N_THEMES; i++) h += opt(i, cfg.theme, THEME_NAMES[i]);
   h += F("</select></label><label>Accueil<select name=variant>");
   h += opt(0, cfg.variant[cfg.theme], "Classique") + opt(1, cfg.variant[cfg.theme], "Grande heure") + opt(2, cfg.variant[cfg.theme], "Tableau de bord");
@@ -162,40 +171,47 @@ static void sendPage() {
   const char* ck[3] = {"cm", "cs", "cg"};
   for (int i = 0; i < 3; i++)
     h += "<label class=ck><input type=checkbox name=" + String(ck[i]) + "on" + chk(cv[i][t] != 0) + "><input type=color name=" + ck[i] + " value=" + hex6(cv[i][t] ? cv[i][t] : 0x5fd4ff) + "> " + cn[i] + "</label>";
-  h += F("</div></section>");
+  h += F("</div></details>");
 
   // Nuit
-  h += "<section><h2>Mode nuit</h2><label class=ck><input type=checkbox name=nOn" + chk(cfg.nightOn) + "> Veille automatique</label><div class=row>";
+  h += secOpen("Mode nuit", cfg.nightOn ? String(cfg.nightFrom) + " h à " + String(cfg.nightTo) + " h" : String("désactivé"), false) + "<label class=ck><input type=checkbox name=nOn" + chk(cfg.nightOn) + "> Veille automatique</label><div class=row>";
   h += "<label>De (heure)<input name=nFrom type=number min=0 max=23 value=" + String(cfg.nightFrom) + "></label>";
   h += "<label>À (heure)<input name=nTo type=number min=0 max=23 value=" + String(cfg.nightTo) + "></label>";
   h += "<label>Style<select name=nStyle>" + opt(0, cfg.nightStyle, "Ambiance") + opt(1, cfg.nightStyle, "Horloge seule") + opt(2, cfg.nightStyle, "Écran éteint") + "</select></label>";
   h += "<label>Luminosité de nuit (%)<input name=nBri type=number min=1 max=60 value=" + String(cfg.nightBri) + "></label></div>";
   h += "<label class=ck><input type=checkbox name=nRed" + chk(cfg.nightRed) + "> Rouge doux (gêne moins le sommeil)</label>";
   h += "<label class=ck><input type=checkbox name=nInfo" + chk(cfg.nightInfo) + "> Infos de demain</label>";
-  h += "<label class=ck><input type=checkbox name=nShift" + chk(cfg.nightShift) + "> Anti-marquage (décalage d'un pixel par minute)</label></section>";
+  h += "<label class=ck><input type=checkbox name=nShift" + chk(cfg.nightShift) + "> Anti-marquage (décalage d'un pixel par minute)</label></details>";
 
   // Écrans
-  h += F("<section><h2>Écrans affichés</h2><div class=row>");
+  h += secOpen("Écrans affichés", "", false) + F("<div class=row>");
   for (int s = 1; s < N_CAROUSEL; s++) h += "<label class=ck><input type=checkbox name=scr" + String(s) + chk(screenOn(s)) + "> " + SCREEN_NAMES[s] + "</label>";
-  h += "</div><label class=ck><input type=checkbox name=sounds" + chk(cfg.sounds) + "> Sons (rappels, minuteur)</label></section>";
+  h += "</div><label class=ck><input type=checkbox name=sounds" + chk(cfg.sounds) + "> Sons (rappels, minuteur)</label></details>";
 
   // Agenda et rappels
-  h += "<section><h2>Agenda et rappels</h2><label>Lien privé de l'agenda (.ics)<input name=ics value=\"" + esc(cfg.ics) + "\" placeholder='https://calendar.google.com/calendar/ical/…/basic.ics'></label>";
+  int nRem = 0;
+  for (const Reminder& r : cfg.rem) nRem += r.on && r.text.length();
+  String agState = String(cfg.ics.length() ? "agenda relié" : "") + (nRem ? String(cfg.ics.length() ? " · " : "") + String(nRem) + (nRem > 1 ? " rappels" : " rappel") : String(""));
+  h += secOpen("Agenda et rappels", agState.length() ? agState : String("rien"), cfg.ics.length() || nRem) + "<label>Lien privé de l'agenda (.ics)<input name=ics value=\"" + esc(cfg.ics) + "\" placeholder='https://calendar.google.com/calendar/ical/…/basic.ics'></label>";
   h += F("<p class=hint>Google Agenda : Paramètres de l'agenda &gt; Adresse secrète au format iCal. iCloud : partager l'agenda en public et copier le lien.</p>");
   for (int i = 0; i < N_REM; i++) {
     const Reminder& r = cfg.rem[i];
     char tm[6]; snprintf(tm, sizeof tm, "%02d:%02d", r.h, r.m);
-    h += "<div class=row><label class=ck><input type=checkbox name=r" + String(i) + "on" + chk(r.on) + "></label>";
+    h += "<div class='row rem'" + String(r.on || r.text.length() ? "" : " hidden") + "><label class=ck><input type=checkbox name=r" + String(i) + "on" + chk(r.on) + "></label>";
     h += "<label>Heure<input type=time name=r" + String(i) + "t value=" + tm + "></label>";
     h += "<label>Rappel<input name=r" + String(i) + "x maxlength=40 value=\"" + esc(r.text) + "\"></label>";
     h += "<label class=ck><input type=checkbox name=r" + String(i) + "d" + chk(r.daily) + "> chaque jour</label></div>";
   }
-  h += F("</section>");
+  h += F("<button type=button class=sec id=addR onclick=addRem()>+ Ajouter un rappel</button>"
+         "<script>function addRem(){const r=document.querySelector('.rem[hidden]');if(!r){addR.textContent='8 rappels au maximum';return}"
+         "r.hidden=false;r.querySelector('[type=checkbox]').checked=true;r.querySelectorAll('input')[2].focus();"
+         "if(!document.querySelector('.rem[hidden]'))addR.hidden=true}</script>");
+  h += F("</details>");
 
   // Transports
-  h += "<section><h2>Transports</h2><label>Réseau<select name=trMode>" + opt(0, cfg.transitMode, "Aucun") + opt(1, cfg.transitMode, "Paris (Île-de-France Mobilités, PRIM)") + opt(2, cfg.transitMode, "Lyon (TCL, data.grandlyon.com)") + "</select></label>";
-  h += "<label>Paris : clé d'API PRIM<input name=prim type=password autocomplete=off placeholder=\"" + String(cfg.primKey.length() ? "enregistrée (laisser vide pour la garder)" : "") + "\"></label>";
-  h += "<div class=row><label>Lyon : nom d'utilisateur (celui du profil, souvent ton e-mail)<input name=lyU value=\"" + esc(cfg.lyonUser) + "\" autocomplete=off></label>";
+  h += secOpen("Transports", cfg.transitMode == 1 ? "Paris" : cfg.transitMode == 2 ? "Lyon" : "aucun", cfg.transitMode != 0) + "<label>Réseau<select name=trMode onchange=trUpd()>" + opt(0, cfg.transitMode, "Aucun") + opt(1, cfg.transitMode, "Paris (Île-de-France Mobilités, PRIM)") + opt(2, cfg.transitMode, "Lyon (TCL, data.grandlyon.com)") + "</select></label>";
+  h += "<div id=trBody><div class=tr1><label>Paris : clé d'API PRIM<input name=prim type=password autocomplete=off placeholder=\"" + String(cfg.primKey.length() ? "enregistrée (laisser vide pour la garder)" : "") + "\"></label></div>";
+  h += "<div class='row tr2'><label>Lyon : nom d'utilisateur (celui du profil, souvent ton e-mail)<input name=lyU value=\"" + esc(cfg.lyonUser) + "\" autocomplete=off></label>";
   h += "<label>Lyon : mot de passe plateforme<input name=lyP type=password autocomplete=new-password placeholder=\"" + String(cfg.lyonPass.length() ? "enregistré (laisser vide pour le garder)" : "") + "\"></label></div>";
   h += F("<p class=hint>Choisis le réseau, enregistre tes identifiants, puis cherche un arrêt par son nom : les cases se remplissent seules. "
          "« Voir les passages » montre les directions, pour choisir le bon côté de la rue. Pense à Enregistrer.</p>");
@@ -213,21 +229,24 @@ static void sendPage() {
   }
   h += FPSTR(TRANSIT_JS);
   if (transit.err.length()) h += "<p class=hint>Dernière erreur : " + esc(transit.err) + "</p>";
-  h += F("</section>");
+  h += F("</div><script>function trUpd(){const m=+document.querySelector('[name=trMode]').value;trBody.hidden=!m;"
+         "document.querySelectorAll('.tr1').forEach(e=>e.hidden=m!=1);document.querySelectorAll('.tr2').forEach(e=>e.hidden=m!=2)}trUpd()</script>");
+  h += F("</details>");
 
   // Sonde et tactile
-  h += "<section><h2>Étalonnage</h2><div class=row><label>Correction de la sonde (°C retranchés)<input name=tOff type=number step=0.1 value=" + String(cfg.tempOffset, 1) + "></label>";
+  h += secOpen("Étalonnage", "sonde -" + String(cfg.tempOffset, 1) + " °C", false) + "<div class=row><label>Correction de la sonde (°C retranchés)<input name=tOff type=number step=0.1 value=" + String(cfg.tempOffset, 1) + "></label>";
   h += "<label>Correction du sonomètre (dB)<input name=sOff type=number step=1 value=" + String(cfg.soundOffset, 0) + "></label></div>";
   h += "<p class=hint>Sonde brute : " + (isnan(clim.raw) ? String("--") + "" : String(clim.raw, 2)) + " °C.</p>";
   h += "<label class=ck><input type=checkbox name=aCal" + chk(cfg.autoCal) + "> Étalonnage automatique au prochain démarrage à froid</label>";
   h += "<p class=hint>Coche, enregistre, puis débranche l'horloge au moins 30 minutes à l'endroit où elle vivra. Rebranche-la : elle mesure la pièce à froid, puis calcule seule sa correction en 40 minutes.</p>";
   h += "<p class=hint>Si le toucher tombe à côté :</p><div class=row><label class=ck><input type=checkbox name=tSwap" + chk(cfg.touchSwap) + "> inverser X et Y</label>";
   h += "<label class=ck><input type=checkbox name=tInvX" + chk(cfg.touchInvX) + "> miroir horizontal</label>";
-  h += "<label class=ck><input type=checkbox name=tInvY" + chk(cfg.touchInvY) + "> miroir vertical</label></div></section>";
+  h += "<label class=ck><input type=checkbox name=tInvY" + chk(cfg.touchInvY) + "> miroir vertical</label></div></details>";
 
   h += F("<div class=sticky><button style='width:100%'>Enregistrer</button></div></form>");
-  h += F("<section><h2>Système</h2><a class='btn sec' href=/update>Mettre à jour le firmware (fichier .bin)</a>"
-         "<form method=post action=/reboot><button class=sec style='width:100%'>Redémarrer</button></form></section></main></html>");
+  h += secOpen("Système", "version " FW_VERSION, false);
+  h += F("<a class='btn sec' href=/update>Mettre à jour le firmware (fichier .bin)</a>"
+         "<form method=post action=/reboot><button class=sec style='width:100%'>Redémarrer</button></form></details></main></html>");
   uint32_t t0 = millis();
   server.send(200, "text/html; charset=utf-8", h);
   Serial.printf("Page envoyee : %u octets en %u ms\n", h.length(), millis() - t0);
