@@ -179,8 +179,8 @@ static void sendPage() {
   // Transports
   h += "<section><h2>Transports</h2><label>Réseau<select name=trMode>" + opt(0, cfg.transitMode, "Aucun") + opt(1, cfg.transitMode, "Paris (Île-de-France Mobilités, PRIM)") + opt(2, cfg.transitMode, "Lyon (TCL, data.grandlyon.com)") + "</select></label>";
   h += "<label>Paris : clé d'API PRIM<input name=prim value=\"" + esc(cfg.primKey) + "\" autocomplete=off></label>";
-  h += "<div class=row><label>Lyon : identifiant Grand Lyon<input name=lyU value=\"" + esc(cfg.lyonUser) + "\" autocomplete=off></label>";
-  h += "<label>Lyon : mot de passe<input name=lyP type=password value=\"" + esc(cfg.lyonPass) + "\" autocomplete=off></label></div>";
+  h += "<div class=row><label>Lyon : nom d'utilisateur (pas l'e-mail)<input name=lyU value=\"" + esc(cfg.lyonUser) + "\" autocomplete=off></label>";
+  h += "<label>Lyon : mot de passe plateforme<input name=lyP type=password value=\"" + esc(cfg.lyonPass) + "\" autocomplete=off></label></div>";
   h += F("<p class=hint>Choisis le réseau, enregistre tes identifiants, puis cherche un arrêt par son nom : les cases se remplissent seules. "
          "« Voir les passages » montre les directions, pour choisir le bon côté de la rue. Pense à Enregistrer.</p>");
   for (int i = 0; i < 3; i++) {
