@@ -247,7 +247,7 @@ void webBegin() {
   });
   server.on("/api", HTTP_GET, []() {
     String j = "{\"in\":" + String(isnan(clim.t) ? 0 : clim.t, 1) + ",\"hum\":" + String(isnan(clim.h) ? 0 : clim.h, 0) +
-               ",\"out\":" + String(isnan(wx.t) ? 0 : wx.t, 1) + ",\"version\":\"" FW_VERSION "\"}";
+               ",\"raw\":" + String(isnan(clim.raw) ? 0 : clim.raw, 2) + ",\"out\":" + String(isnan(wx.t) ? 0 : wx.t, 1) + ",\"version\":\"" FW_VERSION "\"}";
     server.send(200, "application/json", j);
   });
   // Adresses que les téléphones et ordinateurs testent pour détecter un portail : on les renvoie vers la page

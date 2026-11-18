@@ -994,6 +994,7 @@ static void timerTap(int x) {
 }
 
 static void onTap(int x, int y) {
+  lastDraw = 0;   // redessin immédiat après un toucher
   lastTouch = millis();
   if (asleep) { wakeUntil = millis() + (cfg.nightStyle == 2 ? 8000 : 60000); if (cfg.nightStyle != 2) uiScreen = S_HOME; board::backlight(40); asleep = false; return; }
   if (uiScreen == S_ALERT) { uiScreen = S_HOME; return; }
@@ -1033,7 +1034,7 @@ static void touchPoll() {
     if (cfg.touchInvX) x = W - 1 - x;
     if (cfg.touchInvY) y = H - 1 - y;
     if (!down) { down = true; longFired = false; t0 = millis(); sx = x; sy = y; Serial.printf("Toucher x=%d y=%d\n", x, y); }
-    if (!longFired && millis() - t0 > 900 && uiScreen < N_CAROUSEL && !asleep) { longFired = true; uiScreen = S_SETTINGS; stab = 0; lastTouch = millis(); }
+    if (!longFired && millis() - t0 > 900 && uiScreen < N_CAROUSEL && !asleep) { longFired = true; uiScreen = S_SETTINGS; stab = 0; lastTouch = millis(); lastDraw = 0; }
   } else if (down) {
     down = false;
     if (!longFired && millis() - t0 < 900) onTap(sx, sy);
@@ -1048,6 +1049,7 @@ static void bootPoll() {
   if (!now && down) {
     down = false;
     lastTouch = millis();
+    lastDraw = 0;
     if (asleep) { onTap(120, 160); return; }
     if (uiScreen == S_PORTAL) { netWpsStart(); return; }   // bouton BOOT au premier démarrage : WPS
     if (millis() - t0 > 1500) { uiScreen = S_SETTINGS; stab = 0; }
@@ -1087,7 +1089,7 @@ void uiLoop() {
     static uint32_t retry = 0;
     if (millis() - retry > 10000) { retry = millis(); uiRestoreFrame(); }
   }
-  uint32_t period = asleep ? 1000 : 200;
+  uint32_t period = 1000;   // une image par seconde : le processeur chauffe moins la sonde (redessin immédiat après un toucher)
   if (millis() - lastDraw < period) return;
   lastDraw = millis();
   buildCarousel();

@@ -27,7 +27,10 @@ static void readClimate() {
     clim.raw = t;
     float c = t - cfg.tempOffset;
     clim.t = isnan(clim.t) ? c : clim.t * 0.7f + c * 0.3f;
-    clim.h = isnan(clim.h) ? h : clim.h * 0.7f + h * 0.3f;
+    // Humidité ramenée à la vraie température : même quantité d'eau dans l'air, air moins chaud donc plus humide
+    auto es = [](float T) { return 6.112f * expf(17.62f * T / (243.12f + T)); };
+    float hc = constrain(h * es(t) / es(c), 0.0f, 100.0f);
+    clim.h = isnan(clim.h) ? hc : clim.h * 0.7f + hc * 0.3f;
   }
   board::readBattery(clim.vbat);
 }
@@ -58,6 +61,7 @@ static void checkReminders() {
 
 void setup() {
   Serial.begin(115200);
+  setCpuFrequencyMhz(80);   // 80 MHz suffisent et chauffent moins la sonde voisine
   delay(300);
   Serial.println("\nThermo-horloge " FW_VERSION);
   setenv("TZ", "CET-1CEST,M3.5.0,M10.5.0/3", 1);
@@ -104,5 +108,5 @@ void loop() {
   webLoop();
   audioLoop();
   uiLoop();
-  delay(5);
+  delay(20);   // laisse le processeur au repos : moins de chaleur près de la sonde
 }
