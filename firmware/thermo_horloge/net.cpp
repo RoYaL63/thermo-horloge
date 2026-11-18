@@ -5,6 +5,8 @@
 #include <DNSServer.h>
 #include <esp_sntp.h>
 #include <esp_wps.h>
+#include <vector>
+#include <algorithm>
 #include "board.h"
 #include "config.h"
 #include "data.h"
@@ -413,11 +415,82 @@ static void agendaUpdate() {
 // ---------- Transports ----------
 static int minutesUntil(time_t t) { return (int)((t - time(nullptr)) / 60); }
 
+using DepCb = std::function<void(const String& line, const String& dest, int mins)>;
+
+// Interroge un arrêt et rappelle cb pour chaque passage de la ligne demandée (filtre vide = toutes les lignes).
+static int fetchStopOnce(uint8_t mode, const String& stop, const String& filter, const DepCb& cb, int& found) {
+  if (mode == 1) {
+    String url = "https://prim.iledefrance-mobilites.fr/marketplace/stop-monitoring?MonitoringRef=" + urlEncode(stop);
+    String line, dest;
+    JsonScan js([&](const String& ctx, int, const String& key, int, const String& v) {
+      if (ctx == "LineRef" && key == "value") { line = v; dest = ""; }
+      else if (ctx == "DestinationName" && key == "value") dest = v;
+      else if ((key == "ExpectedDepartureTime" || key == "ExpectedArrivalTime") && v.length() >= 16) {
+        if (filter.length() && line.indexOf(filter) < 0) return;
+        time_t t = utcToLocal(v.substring(0, 4).toInt(), v.substring(5, 7).toInt(), v.substring(8, 10).toInt(),
+                              v.substring(11, 13).toInt(), v.substring(14, 16).toInt());
+        String ln = line;   // "STIF:Line::C01371:" -> "C01371"
+        int a = ln.lastIndexOf("::"); if (a >= 0) ln = ln.substring(a + 2); ln.replace(":", "");
+        found++;
+        cb(ln, dest, minutesUntil(t));
+      }
+    });
+    return httpGet(url, js, "apikey", cfg.primKey.c_str());
+  }
+  if (mode == 2) {
+    String url = "https://download.data.grandlyon.com/ws/rdata/tcl_sytral.tclpassagearret/all.json?maxfeatures=60&field=id&value=" + urlEncode(stop);
+    String ligne, dir, heure;
+    int cur = -1;
+    auto flushRow = [&]() {
+      if (heure.length() >= 16 && (filter.isEmpty() || ligne.equalsIgnoreCase(filter))) {
+        struct tm tt = {};
+        tt.tm_year = heure.substring(0, 4).toInt() - 1900; tt.tm_mon = heure.substring(5, 7).toInt() - 1;
+        tt.tm_mday = heure.substring(8, 10).toInt(); tt.tm_hour = heure.substring(11, 13).toInt();
+        tt.tm_min = heure.substring(14, 16).toInt(); tt.tm_isdst = -1;
+        found++;
+        cb(ligne, dir, minutesUntil(mktime(&tt)));
+      }
+      ligne = dir = heure = "";
+    };
+    JsonScan js([&](const String& ctx, int ci, const String& key, int, const String& v) {
+      if (ctx != "values") return;
+      if (ci != cur) { if (cur >= 0) flushRow(); cur = ci; }
+      if (key == "ligne") ligne = v;
+      else if (key == "direction") dir = v;
+      else if (key == "heurepassage") heure = v;
+    });
+    int code = httpGet(url, js, nullptr, nullptr, cfg.lyonUser.c_str(), cfg.lyonPass.c_str());
+    if (cur >= 0) flushRow();
+    return code;
+  }
+  return -1;
+}
+
+// Paris : un identifiant « IDFM:12345 » (issu de la recherche) peut désigner une zone d'arrêt ou un quai.
+// On essaie la zone, puis le quai si la zone ne donne rien.
+static int fetchStop(uint8_t mode, const String& stop, const String& filter, const DepCb& cb) {
+  int found = 0;
+  if (mode == 1 && stop.startsWith("IDFM:")) {
+    String n = stop.substring(5);
+    int code = fetchStopOnce(mode, "STIF:StopArea:SP:" + n + ":", filter, cb, found);
+    if (found || (code != 200 && code != 400)) return code;
+    return fetchStopOnce(mode, "STIF:StopPoint:Q:" + n + ":", filter, cb, found);
+  }
+  return fetchStopOnce(mode, stop, filter, cb, found);
+}
+
 static void addDeparture(Transit& t, int lineIdx, int mins, const String& dest) {
   if (mins < 0 || mins > 120) return;
   Departure& d = t.d[lineIdx];
   if (d.m1 < 0 || mins < d.m1) { d.m2 = d.m1; d.m1 = mins; if (dest.length()) d.dest = dest; }
   else if (d.m2 < 0 || mins < d.m2) d.m2 = mins;
+}
+
+static String httpErr(int code) {
+  if (code == 401 || code == 403) return "identifiants refusés";
+  if (code == 429) return "quota du jour atteint";
+  if (code < 0) return "service injoignable";
+  return "erreur " + String(code);
 }
 
 static void transitUpdate() {
@@ -429,51 +502,26 @@ static void transitUpdate() {
     Departure& d = t.d[t.n];
     d.line = L.label; d.color = L.color; d.stop = L.stopName;
     int idx = t.n++;
-    if (cfg.transitMode == 1) {
-      String url = "https://prim.iledefrance-mobilites.fr/marketplace/stop-monitoring?MonitoringRef=" + urlEncode(L.stop);
-      String line, dest;
-      JsonScan js([&](const String& ctx, int, const String& key, int, const String& v) {
-        if (ctx == "LineRef" && key == "value") { line = v; dest = ""; }
-        else if (ctx == "DestinationName" && key == "value") dest = v;
-        else if ((key == "ExpectedDepartureTime" || key == "ExpectedArrivalTime") && v.length() >= 16) {
-          if (L.filter.length() && line.indexOf(L.filter) < 0) return;
-          time_t tt = utcToLocal(v.substring(0, 4).toInt(), v.substring(5, 7).toInt(), v.substring(8, 10).toInt(),
-                                 v.substring(11, 13).toInt(), v.substring(14, 16).toInt());
-          addDeparture(t, idx, minutesUntil(tt), dest);
-        }
-      });
-      int code = httpGet(url, js, "apikey", cfg.primKey.c_str());
-      if (code != 200) t.err = "PRIM : erreur " + String(code);
-    } else if (cfg.transitMode == 2) {
-      String url = "https://download.data.grandlyon.com/ws/rdata/tcl_sytral.tclpassagearret/all.json?maxfeatures=60&field=id&value=" + urlEncode(L.stop);
-      String ligne, dir, heure;
-      int cur = -1;
-      auto flushRow = [&]() {
-        if (heure.length() >= 16 && (L.filter.isEmpty() || ligne == L.filter)) {
-          struct tm tt = {};
-          tt.tm_year = heure.substring(0, 4).toInt() - 1900; tt.tm_mon = heure.substring(5, 7).toInt() - 1;
-          tt.tm_mday = heure.substring(8, 10).toInt(); tt.tm_hour = heure.substring(11, 13).toInt();
-          tt.tm_min = heure.substring(14, 16).toInt(); tt.tm_isdst = -1;
-          addDeparture(t, idx, minutesUntil(mktime(&tt)), dir);
-        }
-        ligne = dir = heure = "";
-      };
-      JsonScan js([&](const String& ctx, int ci, const String& key, int, const String& v) {
-        if (ctx != "values") return;
-        if (ci != cur) { if (cur >= 0) flushRow(); cur = ci; }
-        if (key == "ligne") ligne = v;
-        else if (key == "direction") dir = v;
-        else if (key == "heurepassage") heure = v;
-      });
-      int code = httpGet(url, js, nullptr, nullptr, cfg.lyonUser.c_str(), cfg.lyonPass.c_str());
-      if (cur >= 0) flushRow();
-      if (code != 200) t.err = "Grand Lyon : erreur " + String(code);
-    }
+    int code = fetchStop(cfg.transitMode, L.stop, L.filter, [&](const String&, const String& dest, int m) { addDeparture(t, idx, m, dest); });
+    if (code != 200) t.err = String(cfg.transitMode == 1 ? "PRIM : " : "Grand Lyon : ") + httpErr(code);
   }
   t.ok = t.n > 0 && t.err.isEmpty();
   t.at = millis();
   transit = t;
 }
+
+// Test depuis la page web : prochains passages d'un arrêt, en JSON, avec les identifiants enregistrés
+String transitProbe(uint8_t mode, const String& stop, const String& filter) {
+  struct P { String l, d; int m; };
+  std::vector<P> v;
+  int code = fetchStop(mode, stop, filter, [&](const String& l, const String& d, int m) { if (m >= 0 && m <= 120 && v.size() < 40) v.push_back({l, d, m}); });
+  std::sort(v.begin(), v.end(), [](const P& a, const P& b) { return a.m < b.m; });
+  auto q = [](String s) { s.replace("\\", " "); s.replace("\"", "'"); return "\"" + s + "\""; };
+  String j = "{\"code\":" + String(code) + ",\"err\":" + q(code == 200 ? String("") : httpErr(code)) + ",\"deps\":[";
+  for (size_t i = 0; i < v.size() && i < 10; i++) j += String(i ? "," : "") + "{\"l\":" + q(v[i].l) + ",\"d\":" + q(v[i].d) + ",\"m\":" + v[i].m + "}";
+  return j + "]}";
+}
+
 
 // ---------- Boucle ----------
 void netLoop() {

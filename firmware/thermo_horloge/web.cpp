@@ -43,6 +43,60 @@ button,.btn{font:600 15px system-ui;background:var(--acc);color:#fff;border:0;bo
 .sticky{position:sticky;bottom:0;padding:10px 0;background:var(--bg)}
 </style>)";
 
+// Recherche d'arrêts : le téléphone interroge directement les listes publiques (Grand Lyon, Île-de-France Mobilités)
+static const char TRANSIT_JS[] PROGMEM = R"JS(<style>.res{display:flex;flex-direction:column;gap:6px}.pick{text-align:left;font-weight:400;background:var(--bg);color:var(--fg);border:1px solid var(--line);padding:8px 10px}.pick small{display:block;color:var(--muted)}</style>
+<script>
+let tm;
+const $=id=>document.getElementById(id);
+const mode=()=>+document.querySelector('[name=trMode]').value;
+const esc=s=>String(s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const LYC={A:'#e2001a',B:'#0069b4',C:'#f39200',D:'#00a04b',F1:'#97bf0d',F2:'#97bf0d',RX:'#e3051b'};
+const lyCol=l=>LYC[l]||(/^T\d/.test(l)?'#6a2c91':/^C\d/.test(l)?'#d6007e':'#6f7780');
+function srch(k){clearTimeout(tm);tm=setTimeout(()=>go(k),450)}
+async function go(k){
+  const q=$('q'+k).value.trim(),out=$('r'+k);
+  if(q.length<3){out.innerHTML='';return}
+  if(!mode()){out.textContent='Choisis d\'abord le réseau (Paris ou Lyon) plus haut.';return}
+  out.textContent='Recherche…';
+  try{
+    const items=[];
+    if(mode()==2){
+      const u='https://download.data.grandlyon.com/wfs/rdata?SERVICE=WFS&VERSION=2.0.0&request=GetFeature&typename=tcl_sytral.tclarret&outputFormat=application/json&count=40&propertyName=id,nom,desserte,commune,adresse&CQL_FILTER='+encodeURIComponent("nom ILIKE '%"+q.replace(/'/g,"''")+"%'");
+      const j=await (await fetch(u)).json();
+      for(const f of j.features){const p=f.properties;for(const ds of String(p.desserte||'').split(',')){if(!ds)continue;const [l,s]=ds.split(':');
+        items.push({lb:l,stop:String(p.id),fi:l,sn:p.nom,co:lyCol(l),info:(s=='A'?'sens aller':'sens retour')+(p.adresse?' · '+p.adresse.toLowerCase():'')+(p.commune?', '+p.commune:'')})}}
+    }else{
+      const u='https://data.iledefrance-mobilites.fr/api/explore/v2.1/catalog/datasets/arrets-lignes/records?limit=40&where='+encodeURIComponent('search(stop_name,"'+q.replace(/"/g,'')+'")');
+      const j=await (await fetch(u)).json();
+      for(const r of j.results||[]){const id=String(r.id||'').replace('IDFM:','');
+        items.push({lb:r.shortname||r.route_long_name,stop:r.stop_id,fi:id,sn:r.stop_name,pid:id,info:(r.mode||'')+(r.nom_commune?' · '+r.nom_commune:'')})}
+    }
+    out.innerHTML='';
+    items.slice(0,40).forEach(it=>{const b=document.createElement('button');b.type='button';b.className='pick';
+      b.innerHTML='<b>'+esc(it.lb)+'</b> '+esc(it.sn)+'<small>'+esc(it.info)+'</small>';b.onclick=()=>pick(k,it);out.appendChild(b)});
+    if(!items.length)out.textContent='Aucun arrêt trouvé.';
+  }catch(e){out.textContent='Recherche impossible : le téléphone doit avoir internet.'}
+}
+async function pick(k,it){
+  const p='l'+k;$(p+'lb').value=String(it.lb).slice(0,6);$(p+'st').value=it.stop;$(p+'fi').value=it.fi;$(p+'sn').value=String(it.sn).slice(0,20);
+  if(it.co)$(p+'co').value=it.co;
+  $('r'+k).innerHTML='<p class=hint>Choisi : '+esc(it.lb)+' à '+esc(it.sn)+'. Pense à Enregistrer.</p>';
+  if(it.pid){try{const j=await (await fetch('https://data.iledefrance-mobilites.fr/api/explore/v2.1/catalog/datasets/referentiel-des-lignes/records?limit=1&where='+encodeURIComponent('id_line="'+it.pid+'"'))).json();
+    const c=j.results&&j.results[0]&&j.results[0].colourweb_hexa;if(c)$(p+'co').value='#'+c}catch(e){}}
+  tst(k);
+}
+async function tst(k){
+  const p='l'+k,o=$('t'+k),st=$(p+'st').value,fi=$(p+'fi').value;
+  if(!st){o.textContent='Choisis d\'abord un arrêt.';return}
+  o.textContent='Interrogation du service…';
+  try{const j=await (await fetch('/api/departs?mode='+mode()+'&stop='+encodeURIComponent(st)+'&filter='+encodeURIComponent(fi))).json();
+    if(j.code!=200){o.textContent='Pas de réponse ('+j.err+'). Vérifie que le réseau et tes identifiants sont enregistrés.';return}
+    if(!j.deps.length){o.textContent='Aucun passage dans les deux prochaines heures.';return}
+    o.innerHTML=j.deps.map(d=>'<b>'+esc(d.l)+'</b> → '+esc(d.d||'?')+' : '+d.m+' min').join('<br>');
+  }catch(e){o.textContent='L\'horloge n\'a pas répondu.'}
+}
+</script>)JS";
+
 static void sendPage() {
   Serial.printf("Page de reglages demandee (memoire %u)\n", ESP.getFreeHeap());
   String h;
@@ -127,16 +181,21 @@ static void sendPage() {
   h += "<label>Paris : clé d'API PRIM<input name=prim value=\"" + esc(cfg.primKey) + "\" autocomplete=off></label>";
   h += "<div class=row><label>Lyon : identifiant Grand Lyon<input name=lyU value=\"" + esc(cfg.lyonUser) + "\" autocomplete=off></label>";
   h += "<label>Lyon : mot de passe<input name=lyP type=password value=\"" + esc(cfg.lyonPass) + "\" autocomplete=off></label></div>";
-  h += F("<p class=hint>Pour chaque ligne : nom affiché, couleur, identifiant de l'arrêt (Paris : STIF:StopPoint:Q:…: ; Lyon : identifiant TCL), filtre de ligne, nom de l'arrêt.</p>");
+  h += F("<p class=hint>Choisis le réseau, enregistre tes identifiants, puis cherche un arrêt par son nom : les cases se remplissent seules. "
+         "« Voir les passages » montre les directions, pour choisir le bon côté de la rue. Pense à Enregistrer.</p>");
   for (int i = 0; i < 3; i++) {
     const TransitLine& L = cfg.lines[i];
-    String k = "l" + String(i);
-    h += "<div class=row><label>Ligne<input name=" + k + "lb maxlength=6 value=\"" + esc(L.label) + "\"></label>";
-    h += "<label class=ck><input type=color name=" + k + "co value=" + hex6(L.color) + "></label>";
-    h += "<label>Arrêt (identifiant)<input name=" + k + "st value=\"" + esc(L.stop) + "\"></label>";
-    h += "<label>Filtre ligne<input name=" + k + "fi value=\"" + esc(L.filter) + "\"></label>";
-    h += "<label>Nom de l'arrêt<input name=" + k + "sn maxlength=20 value=\"" + esc(L.stopName) + "\"></label></div>";
+    String k = "l" + String(i), n = String(i);
+    h += "<div style='border-top:1px solid var(--line);padding-top:10px'><b>Ligne " + String(i + 1) + "</b>";
+    h += "<label>Chercher un arrêt<input id=q" + n + " placeholder='ex. Brignais Centre' autocomplete=off oninput='srch(" + n + ")'></label><div id=r" + n + " class=res></div>";
+    h += "<div class=row><label>Ligne<input id=" + k + "lb name=" + k + "lb maxlength=6 value=\"" + esc(L.label) + "\"></label>";
+    h += "<label class=ck><input id=" + k + "co type=color name=" + k + "co value=" + hex6(L.color) + "></label>";
+    h += "<label>Nom de l'arrêt<input id=" + k + "sn name=" + k + "sn maxlength=20 value=\"" + esc(L.stopName) + "\"></label></div>";
+    h += "<details><summary class=hint>Identifiants techniques</summary><div class=row><label>Arrêt<input id=" + k + "st name=" + k + "st value=\"" + esc(L.stop) + "\"></label>";
+    h += "<label>Filtre ligne<input id=" + k + "fi name=" + k + "fi value=\"" + esc(L.filter) + "\"></label></div></details>";
+    h += "<button type=button class=sec onclick='tst(" + n + ")'>Voir les passages</button><div id=t" + n + " class=hint></div></div>";
   }
+  h += FPSTR(TRANSIT_JS);
   if (transit.err.length()) h += "<p class=hint>Dernière erreur : " + esc(transit.err) + "</p>";
   h += F("</section>");
 
@@ -247,6 +306,10 @@ void webBegin() {
   server.on("/reboot", HTTP_POST, []() {
     server.send(200, "text/html; charset=utf-8", "<meta charset=utf-8><body style='font:16px system-ui;padding:20px'>Redémarrage…");
     restartAt = millis() + 1500;
+  });
+  server.on("/api/departs", HTTP_GET, []() {
+    uint8_t m = server.arg("mode").toInt();
+    server.send(200, "application/json", (m == 1 || m == 2) ? transitProbe(m, server.arg("stop"), server.arg("filter")) : String("{\"code\":0,\"err\":\"réseau non choisi\",\"deps\":[]}"));
   });
   server.on("/api", HTTP_GET, []() {
     String j = "{\"in\":" + String(isnan(clim.t) ? 0 : clim.t, 1) + ",\"hum\":" + String(isnan(clim.h) ? 0 : clim.h, 0) +

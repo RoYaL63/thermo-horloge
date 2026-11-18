@@ -98,3 +98,4 @@ void uiRestoreFrame();
 void uiToast(const String& s);
 void uiAlert(const String& title, const String& text);
 void uiApplyTheme();
+String transitProbe(uint8_t mode, const String& stop, const String& filter);   // test des passages depuis la page web

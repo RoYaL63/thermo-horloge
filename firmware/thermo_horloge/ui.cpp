@@ -814,6 +814,7 @@ static void scrSettings() {
   int n = settingsRows(r);
   for (int i = 0; i < n; i++) kRow(i, 56 + i * 30, 30, r[i].lab, r[i].val, r[i].fr);
   kBtn(12, 278, 88, 26, "< retour", false);
+  kBtn(128, 278, 100, 26, "Page web", true);   // QR code vers la page de réglages, avec l'adresse actuelle
 }
 
 static void scrScreens() {
@@ -1000,7 +1001,7 @@ static void onTap(int x, int y) {
   if (uiScreen == S_ALERT) { uiScreen = S_HOME; return; }
   if (uiScreen == S_PORTAL) { if (x >= 120 && y >= 262 && (netWpsState() == 0 || netWpsState() == 3)) netWpsStart(); return; }
   bool back = x < 104 && y >= 274;
-  if (uiScreen == S_SETTINGS) { if (back) { uiScreen = S_HOME; cfgSave(); } else tapSettings(x, y); return; }
+  if (uiScreen == S_SETTINGS) { if (back) { uiScreen = S_HOME; cfgSave(); } else if (x >= 124 && y >= 274) uiScreen = S_INFO; else tapSettings(x, y); return; }
   if (uiScreen == S_SCREENS || uiScreen == S_INFO) {
     if (back) { uiScreen = S_SETTINGS; return; }
     if (uiScreen == S_SCREENS && y >= 62) {
