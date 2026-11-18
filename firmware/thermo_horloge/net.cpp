@@ -63,7 +63,10 @@ static void onWifiEvent(WiFiEvent_t e, arduino_event_info_t) {   // appelé depu
 
 void netWpsStart() {
   if (wpsState == 1 || wpsState == 2) return;
-  WiFi.mode(WIFI_AP_STA);   // le point d'accès reste ouvert pour le téléphone, la station écoute la box
+  // Le WPS parcourt tous les canaux : le réseau Thermo-Horloge ne peut pas rester ouvert en même temps.
+  // On le ferme pendant l'attente, et on le rouvre si la box ne répond pas.
+  stopAp();
+  WiFi.mode(WIFI_STA);
   esp_wifi_wps_disable();
   esp_wps_config_t c;
   memset(&c, 0, sizeof c);
@@ -104,6 +107,7 @@ static void wpsLoop() {
     } else if (millis() - wpsAt > 25000) wpsState = 3;
   }
   if (wpsState == 4 && millis() - wpsAt > 3000) ESP.restart();
+  if (wpsState == 3 && portal && !apUp) { esp_wifi_wps_disable(); startAp(); Serial.println("WPS sans reponse : reseau Thermo-Horloge rouvert"); }
 }
 
 void netBegin() {

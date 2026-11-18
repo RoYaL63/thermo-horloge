@@ -44,8 +44,7 @@ button,.btn{font:600 15px system-ui;background:var(--acc);color:#fff;border:0;bo
 </style>)";
 
 static void sendPage() {
-  uiReleaseFrame();   // la page fait ~15 Ko : on libère l'image écran le temps de la construire
-  struct Restore { ~Restore() { uiRestoreFrame(); } } restore;
+  Serial.printf("Page de reglages demandee (memoire %u)\n", ESP.getFreeHeap());
   String h;
   h.reserve(16000);
   h += F("<!doctype html><html lang=fr><meta charset=utf-8><meta name=viewport content='width=device-width,initial-scale=1'><title>Thermo-horloge</title>");
@@ -253,6 +252,7 @@ void webBegin() {
   static const char* const PROBES[] = {"/generate_204", "/gen_204", "/hotspot-detect.html", "/library/test/success.html",
                                        "/connecttest.txt", "/ncsi.txt", "/success.txt", "/canonical.html", "/redirect", "/mobile/status.php"};
   for (const char* p : PROBES) server.on(p, []() {
+    Serial.printf("Test de portail : %s %s\n", server.hostHeader().c_str(), server.uri().c_str());
     if (netPortal() || (WiFi.getMode() & WIFI_AP)) {
       server.sendHeader("Location", "http://" + WiFi.softAPIP().toString() + "/");
       server.sendHeader("Cache-Control", "no-store");
@@ -260,6 +260,7 @@ void webBegin() {
     } else server.send(204);
   });
   server.onNotFound([]() {
+    Serial.printf("Requete inconnue : %s %s\n", server.hostHeader().c_str(), server.uri().c_str());
     if (netPortal() || WiFi.getMode() & WIFI_AP) { server.sendHeader("Location", "http://" + WiFi.softAPIP().toString() + "/"); server.send(302); }
     else server.send(404, "text/plain", "Page introuvable");
   });

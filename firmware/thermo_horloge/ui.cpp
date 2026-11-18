@@ -923,13 +923,20 @@ static void drawFrame() {
   }
 }
 
+// L'image en mémoire n'est libérée qu'en dernier recours : la recréer peut échouer si la mémoire est morcelée,
+// et l'écran dessiné en direct clignote. Avec ~130 Ko libres, une requête chiffrée tient sans la libérer.
 void uiReleaseFrame() {
-  if (frameOk) { fb.deleteSprite(); frameOk = false; d = &lcd; frameReleased = true; }
+  if (frameOk && ESP.getMaxAllocHeap() < 60000) {
+    Serial.printf("Memoire basse (%u) : image ecran liberee\n", ESP.getMaxAllocHeap());
+    fb.deleteSprite(); frameOk = false; d = &lcd; frameReleased = true;
+  }
 }
 
 void uiRestoreFrame() {
+  if (!frameReleased) return;
   frameReleased = false;
   if (!frameOk && fb.createSprite(W, H)) { frameOk = true; d = &fb; }
+  else Serial.println("Image ecran non recreee : affichage direct");
 }
 
 // ---------- Tactile et bouton ----------
