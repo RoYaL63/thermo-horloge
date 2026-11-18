@@ -151,7 +151,9 @@ static void sendPage() {
   h += F("<div class=sticky><button style='width:100%'>Enregistrer</button></div></form>");
   h += F("<section><h2>Système</h2><a class='btn sec' href=/update>Mettre à jour le firmware (fichier .bin)</a>"
          "<form method=post action=/reboot><button class=sec style='width:100%'>Redémarrer</button></form></section></main></html>");
+  uint32_t t0 = millis();
   server.send(200, "text/html; charset=utf-8", h);
+  Serial.printf("Page envoyee : %u octets en %u ms\n", h.length(), millis() - t0);
 }
 
 static int toInt(const char* n, int def, int lo, int hi) { return server.hasArg(n) && server.arg(n).length() ? constrain(server.arg(n).toInt(), lo, hi) : def; }
@@ -272,5 +274,11 @@ void webBegin() {
 
 void webLoop() {
   server.handleClient();
+  static uint32_t beat = 0;
+  if (millis() - beat > 15000) {   // signe de vie dans le journal série
+    beat = millis();
+    Serial.printf("[%lus] memoire %u, telephones connectes %d, WiFi %s\n", millis() / 1000, ESP.getFreeHeap(),
+                  WiFi.softAPgetStationNum(), WiFi.status() == WL_CONNECTED ? WiFi.localIP().toString().c_str() : "portail");
+  }
   if (restartAt && millis() > restartAt) ESP.restart();
 }

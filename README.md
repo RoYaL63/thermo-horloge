@@ -20,7 +20,7 @@ Firmware de la thermo-horloge sur la carte Waveshare **ESP32-C6-Touch-LCD-2.8**,
    - **sans rien taper** : toucher « Bouton WPS » sur l'écran (ou appuyer sur BOOT), puis appuyer
      sur le bouton WPS de la box dans les 2 minutes ;
    - **avec le téléphone** : scanner le QR code (ou rejoindre le WiFi **Thermo-Horloge**), la page s'ouvre
-     (sinon `192.168.4.1`), choisir le réseau, coller le mot de passe, la ville et la pièce, puis **Enregistrer**.
+     (sinon taper **`http://192.168.4.1`** dans le navigateur, avec bien `http` et non `https`), choisir le réseau, coller le mot de passe, la ville et la pièce, puis **Enregistrer**.
      La page explique comment copier le mot de passe du WiFi depuis un Android ou un iPhone.
 
    Aucun téléphone ne laisse une application lire ses mots de passe WiFi enregistrés : le WPS ou le

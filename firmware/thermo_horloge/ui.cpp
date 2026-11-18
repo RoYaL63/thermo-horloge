@@ -868,7 +868,7 @@ static void scrPortal() {
   d->fillRect(70, 32, 100, 100, rgb(0xffffff));
   d->qrcode("WIFI:T:nopass;S:Thermo-Horloge;;", 74, 36, 92, 2);
   txt(U("Premier démarrage"), 120, 148, fLab(), G.am, 1);
-  const char* steps[3][2] = {{"Rejoins le réseau", "Thermo-Horloge"}, {"La page s'ouvre, sinon", "192.168.4.1"}, {"Choisis ton WiFi", "et ta ville"}};
+  const char* steps[3][2] = {{"Rejoins le réseau", "Thermo-Horloge"}, {"Dans le navigateur, tape", "http://192.168.4.1"}, {"Choisis ton WiFi", "et ta ville"}};
   for (int i = 0; i < 3; i++) {
     int y = 158 + i * 36;
     kShape(14, y, 22, 26, KT.sh == SH_TEXT || KT.sh == SH_BRACKET ? SH_RECT : KT.sh, G.cy, G.bg, false);
