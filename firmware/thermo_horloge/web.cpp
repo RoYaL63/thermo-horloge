@@ -178,9 +178,9 @@ static void sendPage() {
 
   // Transports
   h += "<section><h2>Transports</h2><label>Réseau<select name=trMode>" + opt(0, cfg.transitMode, "Aucun") + opt(1, cfg.transitMode, "Paris (Île-de-France Mobilités, PRIM)") + opt(2, cfg.transitMode, "Lyon (TCL, data.grandlyon.com)") + "</select></label>";
-  h += "<label>Paris : clé d'API PRIM<input name=prim value=\"" + esc(cfg.primKey) + "\" autocomplete=off></label>";
+  h += "<label>Paris : clé d'API PRIM<input name=prim type=password autocomplete=off placeholder=\"" + String(cfg.primKey.length() ? "enregistrée (laisser vide pour la garder)" : "") + "\"></label>";
   h += "<div class=row><label>Lyon : nom d'utilisateur (celui du profil, souvent ton e-mail)<input name=lyU value=\"" + esc(cfg.lyonUser) + "\" autocomplete=off></label>";
-  h += "<label>Lyon : mot de passe plateforme<input name=lyP type=password value=\"" + esc(cfg.lyonPass) + "\" autocomplete=off></label></div>";
+  h += "<label>Lyon : mot de passe plateforme<input name=lyP type=password autocomplete=new-password placeholder=\"" + String(cfg.lyonPass.length() ? "enregistré (laisser vide pour le garder)" : "") + "\"></label></div>";
   h += F("<p class=hint>Choisis le réseau, enregistre tes identifiants, puis cherche un arrêt par son nom : les cases se remplissent seules. "
          "« Voir les passages » montre les directions, pour choisir le bon côté de la rue. Pense à Enregistrer.</p>");
   for (int i = 0; i < 3; i++) {
@@ -265,8 +265,9 @@ static void handleSave() {
     r.text = server.arg(k + "x");
   }
   cfg.transitMode = toInt("trMode", cfg.transitMode, 0, 2);
-  cfg.primKey = server.arg("prim"); cfg.primKey.trim();
-  cfg.lyonUser = server.arg("lyU"); cfg.lyonPass = server.arg("lyP");
+  if (server.arg("prim").length()) { cfg.primKey = server.arg("prim"); cfg.primKey.trim(); }   // vide = on garde la clé enregistrée
+  cfg.lyonUser = server.arg("lyU");
+  if (server.arg("lyP").length()) cfg.lyonPass = server.arg("lyP");   // le mot de passe n'est jamais renvoyé à la page : vide = on garde l'ancien
   for (int i = 0; i < 3; i++) {
     String k = "l" + String(i);
     TransitLine& L = cfg.lines[i];
