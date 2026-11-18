@@ -33,6 +33,7 @@ void cfgLoad() {
   cfg.nightInfo = prefs.getBool("nInfo", cfg.nightInfo);
   cfg.nightShift = prefs.getBool("nShift", cfg.nightShift);
   cfg.tempOffset = prefs.getFloat("tOff", cfg.tempOffset);
+  cfg.autoCal = prefs.getBool("aCal", false);
   cfg.soundOffset = prefs.getFloat("sOff", cfg.soundOffset);
   cfg.screens = prefs.getUShort("screens", cfg.screens);
   cfg.touchSwap = prefs.getBool("tSwap", false);
@@ -89,6 +90,7 @@ void cfgSave() {
   prefs.putBool("nInfo", cfg.nightInfo);
   prefs.putBool("nShift", cfg.nightShift);
   prefs.putFloat("tOff", cfg.tempOffset);
+  prefs.putBool("aCal", cfg.autoCal);
   prefs.putFloat("sOff", cfg.soundOffset);
   prefs.putUShort("screens", cfg.screens);
   prefs.putBool("tSwap", cfg.touchSwap);

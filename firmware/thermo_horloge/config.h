@@ -45,7 +45,8 @@ struct Settings {
   bool nightRed = true;
   uint8_t nightBri = 12;
   bool nightInfo = true, nightShift = true;
-  float tempOffset = 2.1f;              // échauffement de la sonde, à étalonner
+  float tempOffset = 2.1f;              // échauffement de la sonde (étalonnage automatique à froid ou à la main)
+  bool autoCal = false;                 // étalonnage automatique demandé pour le prochain démarrage à froid
   float soundOffset = 0;                // correction du sonomètre, en dB
   uint16_t screens = 0x01FF;            // un bit par écran du carrousel
   bool touchSwap = false, touchInvX = false, touchInvY = false;

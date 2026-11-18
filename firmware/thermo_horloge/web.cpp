@@ -143,7 +143,9 @@ static void sendPage() {
   // Sonde et tactile
   h += "<section><h2>Étalonnage</h2><div class=row><label>Correction de la sonde (°C retranchés)<input name=tOff type=number step=0.1 value=" + String(cfg.tempOffset, 1) + "></label>";
   h += "<label>Correction du sonomètre (dB)<input name=sOff type=number step=1 value=" + String(cfg.soundOffset, 0) + "></label></div>";
-  h += "<p class=hint>Sonde brute : " + (isnan(clim.raw) ? String("--") + "" : String(clim.raw, 2)) + " °C. Compare à un thermomètre après 30 minutes d'allumage.</p>";
+  h += "<p class=hint>Sonde brute : " + (isnan(clim.raw) ? String("--") + "" : String(clim.raw, 2)) + " °C.</p>";
+  h += "<label class=ck><input type=checkbox name=aCal" + chk(cfg.autoCal) + "> Étalonnage automatique au prochain démarrage à froid</label>";
+  h += "<p class=hint>Coche, enregistre, puis débranche l'horloge au moins 30 minutes à l'endroit où elle vivra. Rebranche-la : elle mesure la pièce à froid, puis calcule seule sa correction en 40 minutes.</p>";
   h += "<p class=hint>Si le toucher tombe à côté :</p><div class=row><label class=ck><input type=checkbox name=tSwap" + chk(cfg.touchSwap) + "> inverser X et Y</label>";
   h += "<label class=ck><input type=checkbox name=tInvX" + chk(cfg.touchInvX) + "> miroir horizontal</label>";
   h += "<label class=ck><input type=checkbox name=tInvY" + chk(cfg.touchInvY) + "> miroir vertical</label></div></section>";
@@ -215,7 +217,8 @@ static void handleSave() {
     L.filter = server.arg(k + "fi"); L.filter.trim();
     L.stopName = server.arg(k + "sn");
   }
-  if (server.arg("tOff").length()) cfg.tempOffset = constrain(server.arg("tOff").toFloat(), -10.0f, 10.0f);
+  if (server.arg("tOff").length()) cfg.tempOffset = constrain(server.arg("tOff").toFloat(), -5.0f, 20.0f);
+  cfg.autoCal = server.hasArg("aCal");
   if (server.arg("sOff").length()) cfg.soundOffset = constrain(server.arg("sOff").toFloat(), -40.0f, 40.0f);
   cfg.touchSwap = server.hasArg("tSwap");
   cfg.touchInvX = server.hasArg("tInvX");

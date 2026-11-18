@@ -35,6 +35,32 @@ static void readClimate() {
   board::readBattery(clim.vbat);
 }
 
+// Étalonnage automatique : juste après un branchement à froid, la sonde est à la température de la pièce.
+// 40 minutes plus tard, l'écart avec la mesure stabilisée donne la correction à appliquer.
+static float coldRaw = NAN;
+static void calBegin() {
+  if (!cfg.autoCal) return;
+  float t, h;
+  if (board::readClimate(t, h)) { coldRaw = t; Serial.printf("Etalonnage : mesure a froid %.2f C, resultat dans 40 min\n", t); }
+}
+static void calLoop() {
+  if (!cfg.autoCal || isnan(coldRaw) || millis() < 40UL * 60 * 1000 || isnan(clim.raw)) return;
+  float off = clim.raw - coldRaw;
+  if (off < 1 || off > 20 || coldRaw > 30) {
+    Serial.printf("Etalonnage rate (ecart %.1f) : carte pas assez froide au demarrage\n", off);
+    uiAlert("Étalonnage", "Carte pas assez froide au départ : réessaie");
+    cfg.autoCal = false;
+  } else {
+    cfg.tempOffset = roundf(off * 10) / 10;
+    cfg.autoCal = false;
+    clim.t = NAN;
+    Serial.printf("Etalonnage reussi : correction %.1f C\n", cfg.tempOffset);
+    uiAlert("Sonde étalonnée", "Correction : -" + String(cfg.tempOffset, 1) + " °C");
+  }
+  coldRaw = NAN;
+  cfgSave();
+}
+
 static void pushHistory() {
   if (isnan(clim.t)) return;
   if (clim.nh < 96) clim.hist[clim.nh++] = clim.t;
@@ -70,6 +96,7 @@ void setup() {
   if (!board::begin()) Serial.println("Expandeur CH32 absent a 0x24 : ecran et retroeclairage non pilotables");
   board::scanI2C();
   cfgLoad();
+  calBegin();
 
   struct tm t;
   if (board::rtcRead(t) && t.tm_year >= 125) timeOk = true;
@@ -103,6 +130,7 @@ void loop() {
     }
   }
 
+  calLoop();
   checkReminders();
   netLoop();
   webLoop();
